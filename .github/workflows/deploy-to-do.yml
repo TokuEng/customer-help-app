@@ -1,0 +1,103 @@
+name: Deploy to DigitalOcean App Platform
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Update app spec
+        run: |
+          # Create app-spec.yaml with secrets from GitHub Secrets
+          cat > app-spec.yaml << EOF
+          name: customer-help-center
+          region: sfo3
+          
+          services:
+            - name: web
+              git:
+                repo_clone_url: https://github.com/TokuEng/customer-help-app.git
+                branch: main
+              source_dir: /apps/web
+              build_command: npm install && npm run build
+              run_command: npm start
+              http_port: 3000
+              instance_count: 1
+              instance_size_slug: basic-xs
+              envs:
+                - key: NODE_ENV
+                  value: production
+                - key: NEXT_PUBLIC_API_URL
+                  value: \${APP_URL}/api
+                - key: REVALIDATE_TOKEN
+                  type: SECRET
+                  value: ${{ secrets.REVALIDATE_TOKEN }}
+              routes:
+                - path: /
+            
+            - name: api
+              git:
+                repo_clone_url: https://github.com/TokuEng/customer-help-app.git
+                branch: main
+              source_dir: /apps/api
+              dockerfile_path: /apps/api/Dockerfile
+              http_port: 8080
+              instance_count: 1
+              instance_size_slug: basic-xs
+              envs:
+                - key: DATABASE_URL
+                  value: \${customer-help-db.DATABASE_URL}
+                - key: MEILI_HOST
+                  value: ${{ secrets.MEILI_HOST }}
+                - key: MEILI_MASTER_KEY
+                  type: SECRET
+                  value: ${{ secrets.MEILI_MASTER_KEY }}
+                - key: NOTION_TOKEN
+                  type: SECRET
+                  value: ${{ secrets.NOTION_TOKEN }}
+                - key: NOTION_INDEX_PAGE_ID
+                  value: ${{ secrets.NOTION_INDEX_PAGE_ID }}
+                - key: EMBEDDINGS_PROVIDER
+                  value: openai
+                - key: OPENAI_API_KEY
+                  type: SECRET
+                  value: ${{ secrets.OPENAI_API_KEY }}
+                - key: REVALIDATE_TOKEN
+                  type: SECRET
+                  value: ${{ secrets.REVALIDATE_TOKEN }}
+                - key: WEB_BASE_URL
+                  value: \${APP_URL}
+              routes:
+                - path: /api
+          EOF
+
+      - name: Update app on DigitalOcean
+        run: |
+          # First, try to create the app
+          doctl apps create --spec app-spec.yaml || true
+          
+          # If app exists, update it
+          if [ -n "${{ secrets.DO_APP_ID }}" ]; then
+            doctl apps update ${{ secrets.DO_APP_ID }} --spec app-spec.yaml
+          else
+            echo "App ID not found. Please set DO_APP_ID secret after initial creation."
+          fi
+
+      - name: Get app info
+        if: success()
+        run: |
+          if [ -n "${{ secrets.DO_APP_ID }}" ]; then
+            doctl apps get ${{ secrets.DO_APP_ID }}
+          fi

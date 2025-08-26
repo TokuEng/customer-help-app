@@ -8,12 +8,12 @@ DATABASE_URL=${db.DATABASE_URL}  # App Platform will auto-fill this
 MEILI_HOST=http://10.124.0.39:7700      # Private IP
 MEILI_MASTER_KEY=NzEzYTdkNjQ0N2FiYjFkODg0NzdjNzNk
 
-## Notion (📝 Need to create)
-NOTION_TOKEN=ntn_S31097131812gWkADDpZzrDN7Nv3wyyMLwbSbXKRQcC556                    # From notion.so/my-integrations
-NOTION_INDEX_PAGE_ID=2030b95a751d80eaac8df6267041fb14                   # Your Knowledge Base page ID
+## Notion (✅ Done)
+NOTION_TOKEN=ntn_S31097131812gWkADDpZzrDN7Nv3wyyMLwbSbXKRQcC556
+NOTION_INDEX_PAGE_ID=2030b95a751d80eaac8df6267041fb14
 
-## OpenAI (🤖 For embeddings)
-OPENAI_API_KEY=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
+## OpenAI (✅ Done)
+OPENAI_API_KEY=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
 
 ## Security (✅ Done)
 REVALIDATE_TOKEN=MJHXGOOpaglqgS3f+4l3P6aYXfoYlE3LghMSHt9w7gw=
