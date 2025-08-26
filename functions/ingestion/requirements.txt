@@ -1,0 +1,10 @@
+asyncpg==0.29.0
+httpx==0.25.2
+python-dotenv==1.0.0
+notion-client==2.2.1
+markdown==3.5.1
+beautifulsoup4==4.12.2
+tiktoken==0.5.2
+numpy==1.24.3
+openai==1.6.1
+meilisearch-python-async==1.6.2
