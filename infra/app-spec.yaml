@@ -7,7 +7,7 @@ services:
   # Next.js Web Application
   - name: web
     github:
-      repo: YOUR_GITHUB_USERNAME/customer-help-center
+      repo: TokuEng/customer-help-center
       branch: main
       deploy_on_push: true
     source_dir: /apps/web
@@ -30,7 +30,7 @@ services:
   # FastAPI Backend
   - name: api
     github:
-      repo: YOUR_GITHUB_USERNAME/customer-help-center
+      repo: TokuEng/customer-help-center
       branch: main
       deploy_on_push: true
     source_dir: /apps/api
