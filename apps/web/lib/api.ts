@@ -1,11 +1,17 @@
 // Get the base URL for API calls
 function getApiBaseUrl() {
+  // Use environment variable if available (for local development)
+  const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envApiUrl && envApiUrl !== '') {
+    return envApiUrl;
+  }
+  
   // For server-side rendering, we need the full internal URL
   if (typeof window === 'undefined') {
     return 'http://api:8080/api';  // Internal service-to-service communication
   }
   
-  // For client-side, use relative URL with double prefix
+  // For client-side, use relative URL with double prefix (DigitalOcean routing)
   return '/api/api';  // Double prefix due to DigitalOcean routing + API prefix
 }
 

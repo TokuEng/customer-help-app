@@ -1,0 +1,6 @@
+<svg width="1920" height="120" viewBox="0 0 1920 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+  <path d="M0 60C320 20 640 80 960 60C1280 40 1600 100 1920 60V120H0V60Z" fill="#1F5AE0" opacity="0.1"/>
+  <path d="M0 80C320 40 640 100 960 80C1280 60 1600 120 1920 80V120H0V80Z" fill="#1F5AE0" opacity="0.2"/>
+  <path d="M0 100C320 60 640 120 960 100C1280 80 1600 140 1920 100V120H0V100Z" fill="#1F5AE0" opacity="0.3"/>
+</svg>
+

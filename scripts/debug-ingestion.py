@@ -89,3 +89,4 @@ if __name__ == "__main__":
     load_dotenv('apps/api/.env')
     
     asyncio.run(test_all_connections())
+

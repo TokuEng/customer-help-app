@@ -50,42 +50,51 @@ class NotionService:
         pages = []
         current_heading = None
         
-        for block in blocks:
+        print(f"🔍 Processing {len(blocks)} blocks from index page...")
+        
+        for i, block in enumerate(blocks):
             block_type = block['type']
             
             # Update current heading when we encounter a heading block
             if block_type in ['heading_1', 'heading_2', 'heading_3']:
                 heading_text = self._extract_text_from_block(block)
+                print(f"📋 Found heading: '{heading_text}'")
                 if heading_text:
-                    # Map to our categories
-                    if 'Library' in heading_text:
+                    # Map to our categories (case-insensitive and more flexible)
+                    heading_lower = heading_text.lower()
+                    if 'library' in heading_lower:
                         current_heading = 'Library'
-                    elif 'Token Payroll' in heading_text or 'Payroll' in heading_text:
+                    elif 'token payroll' in heading_lower or 'payroll' in heading_lower:
                         current_heading = 'Token Payroll'
-                    elif 'Benefits' in heading_text or 'Benefit' in heading_text:
+                    elif 'benefit' in heading_lower:  # More flexible - catches "Benefits", "Benefit", etc.
                         current_heading = 'Benefits'
-                    elif 'Policy' in heading_text or 'Policies' in heading_text:
+                        print(f"✅ Benefits section detected!")
+                    elif 'polic' in heading_lower:  # Catches "Policy", "Policies"
                         current_heading = 'Policy'
                     else:
                         # Use the heading text as-is if it doesn't match predefined categories
                         current_heading = heading_text
+                    print(f"📂 Category set to: {current_heading}")
             
             # Extract page links
             elif block_type == 'child_page':
                 page_id = block['id']
-                # Always add child pages, use default category if none set
+                category = current_heading or 'Library'
                 pages.append({
                     'page_id': page_id,
-                    'category': current_heading or 'Library'
+                    'category': category
                 })
+                print(f"📄 Found child page (Category: {category})")
             
             elif block_type == 'link_to_page':
                 page_id = block['link_to_page'].get('page_id')
                 if page_id:
+                    category = current_heading or 'Library'
                     pages.append({
                         'page_id': page_id,
-                        'category': current_heading or 'Library'
+                        'category': category
                     })
+                    print(f"🔗 Found linked page (Category: {category})")
             
             # Check for inline page mentions in text blocks
             elif block_type in ['paragraph', 'bulleted_list_item', 'numbered_list_item']:
@@ -93,10 +102,24 @@ class NotionService:
                 for text_obj in rich_text:
                     if text_obj.get('type') == 'mention' and text_obj['mention'].get('type') == 'page':
                         page_id = text_obj['mention']['page']['id']
+                        category = current_heading or 'Library'
                         pages.append({
                             'page_id': page_id,
-                            'category': current_heading or 'Library'
+                            'category': category
                         })
+                        print(f"📎 Found inline page mention (Category: {category})")
+        
+        # Summary of categorization
+        category_counts = {}
+        for page in pages:
+            cat = page['category']
+            category_counts[cat] = category_counts.get(cat, 0) + 1
+        
+        print(f"\n📊 Final categorization summary:")
+        for category, count in sorted(category_counts.items()):
+            print(f"   {category}: {count} pages")
+            if category == 'Benefits':
+                print(f"   ✅ Benefits pages will be processed!")
         
         return pages
     
@@ -113,6 +136,13 @@ class NotionService:
         
         # Get last edited time
         last_edited_time = datetime.fromisoformat(page['last_edited_time'].replace('Z', '+00:00'))
+        
+        # Clean up old images for this page if image storage is available
+        if self.image_storage:
+            try:
+                await self.image_storage.cleanup_old_images(page_id)
+            except Exception as e:
+                print(f"⚠️  Failed to cleanup old images for page {page_id}: {e}")
         
         # Get all blocks (fresh to avoid expired URLs)
         fetch_start = time.time()
@@ -290,6 +320,66 @@ class NotionService:
             elif block_type == 'divider':
                 lines.append(f"{indent}---\n")
             
+            elif block_type == 'table':
+                # Handle table blocks
+                table_rows = []
+                
+                # Get table rows from children
+                table_children = await self._fetch_block_children(block['id'])
+                
+                for row_block in table_children:
+                    if row_block['type'] == 'table_row':
+                        cells = row_block['table_row']['cells']
+                        row_texts = []
+                        for cell in cells:
+                            cell_text = self._rich_text_to_markdown(cell)
+                            row_texts.append(cell_text.strip() or ' ')
+                        table_rows.append(row_texts)
+                
+                if table_rows:
+                    # Create markdown table
+                    lines.append(f"{indent}\n")  # Add spacing before table
+                    
+                    # Table header
+                    if len(table_rows) > 0:
+                        header = table_rows[0]
+                        lines.append(f"{indent}| " + " | ".join(header) + " |")
+                        # Header separator
+                        lines.append(f"{indent}| " + " | ".join(["-" * max(3, len(cell)) for cell in header]) + " |")
+                        
+                        # Table body
+                        for row in table_rows[1:]:
+                            lines.append(f"{indent}| " + " | ".join(row) + " |")
+                    
+                    lines.append(f"{indent}\n")  # Add spacing after table
+            
+            elif block_type == 'callout':
+                # Handle callout blocks (often used for formatted content like steps)
+                emoji = block['callout'].get('icon', {}).get('emoji', '💡')
+                text = self._rich_text_to_markdown(block['callout']['rich_text'])
+                lines.append(f"{indent}> {emoji} {text}\n")
+            
+            elif block_type == 'toggle':
+                # Handle toggle blocks
+                text = self._rich_text_to_markdown(block['toggle']['rich_text'])
+                lines.append(f"{indent}<details>\n{indent}<summary>{text}</summary>\n")
+                
+                # Process children if any
+                if block.get('has_children'):
+                    children = await self._fetch_block_children(block['id'])
+                    child_markdown = await self._blocks_to_markdown(children, page_id)
+                    if child_markdown.strip():
+                        lines.append(f"{indent}\n{child_markdown}\n")
+                
+                lines.append(f"{indent}</details>\n")
+            
+            elif block_type == 'to_do':
+                # Handle to-do blocks
+                checked = block['to_do'].get('checked', False)
+                text = self._rich_text_to_markdown(block['to_do']['rich_text'])
+                checkbox = "[x]" if checked else "[ ]"
+                lines.append(f"{indent}- {checkbox} {text}")
+            
             elif block_type == 'image':
                 block_id = block['id']
                 caption = self._get_caption_from_block(block)
@@ -338,8 +428,30 @@ class NotionService:
                             lines.append(f"{indent}*Note: This image is hosted on Notion and may expire*\n")
                 else:
                     print(f"❌ Could not get fresh URL for image block {block_id}")
+            
+            else:
+                # Log unsupported block types for debugging
+                print(f"⚠️  Unsupported block type: {block_type}")
         
         return '\n'.join(lines)
+    
+    async def _fetch_block_children(self, block_id: str) -> List[Dict]:
+        """Fetch immediate children of a block"""
+        children = []
+        has_more = True
+        start_cursor = None
+        
+        while has_more:
+            response = await self.client.blocks.children.list(
+                block_id=block_id,
+                start_cursor=start_cursor,
+                page_size=100
+            )
+            children.extend(response['results'])
+            has_more = response['has_more']
+            start_cursor = response.get('next_cursor')
+        
+        return children
     
     def _rich_text_to_markdown(self, rich_text: List[Dict]) -> str:
         """Convert Notion rich text to markdown"""

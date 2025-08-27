@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { api, type Suggestion } from '@/lib/api';
 import { cleanMarkdown } from '@/lib/text-utils';
+import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
+import { Icon } from '@/components/ui/icon';
 
 interface SearchBarProps {
   defaultValue?: string;
@@ -159,7 +161,7 @@ export function SearchBar({
             )}
             variant="ghost"
           >
-            <Search className={isLarge ? "h-5 w-5" : "h-4 w-4"} />
+            <Icon name="search" className={`${isLarge ? "h-6 w-6" : "h-5 w-5"} text-gray-600 hover:text-primary transition-colors`} />
             <span className="sr-only">Search</span>
           </Button>
         </div>
@@ -169,9 +171,12 @@ export function SearchBar({
       {showSuggestions && (suggestions.length > 0 || isLoading) && (
         <div className="absolute top-full left-0 w-full z-50 bg-white border border-gray-200 rounded-lg shadow-xl mt-2 max-h-80 overflow-y-auto">
           {isLoading && (
-            <div className="px-4 py-3 text-sm text-gray-500 flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-              Finding suggestions...
+            <div className="px-4 py-3 space-y-2">
+              <div className="text-sm text-gray-500 text-center font-medium">Finding suggestions...</div>
+              <Progress 
+                value={66} 
+                className="h-1.5 [&>div]:bg-gradient-to-r [&>div]:from-cyan-400 [&>div]:via-sky-500 [&>div]:to-indigo-500 [&>div]:rounded-l-full"
+              />
             </div>
           )}
           
@@ -191,7 +196,7 @@ export function SearchBar({
                 )}
                 onClick={() => handleSuggestionClick(suggestion)}
               >
-                <div className="text-sm font-medium text-left">
+                <div className="text-sm font-semibold text-left">
                   {suggestion.highlight ? (
                     <span dangerouslySetInnerHTML={{
                       __html: cleanMarkdown(suggestion.highlight).replace(/<mark>/g, '<mark class="bg-blue-200 text-blue-900 px-1 rounded">')
@@ -211,6 +216,4 @@ export function SearchBar({
   );
 }
 
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ');
-}
+

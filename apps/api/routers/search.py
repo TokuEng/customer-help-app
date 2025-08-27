@@ -68,7 +68,18 @@ async def search(request: Request, body: SearchRequest):
         # Build results with snippets
         results = []
         hits = search_results.get('hits', []) if isinstance(search_results, dict) else search_results.hits
-        for hit in hits[:body.top_k]:
+        
+        # Deduplicate by slug to avoid showing the same article multiple times
+        seen_slugs = set()
+        unique_hits = []
+        for hit in hits:
+            if hit['slug'] not in seen_slugs:
+                seen_slugs.add(hit['slug'])
+                unique_hits.append(hit)
+                if len(unique_hits) >= body.top_k:
+                    break
+        
+        for hit in unique_hits:
             # Get chunks for this article to build snippet
             async with db_pool.acquire() as conn:
                 chunks = await conn.fetch(

@@ -93,6 +93,26 @@ export function generateSmartSummary(content: string, title: string, maxLength: 
 }
 
 /**
+ * Clean snippet text for display (more aggressive than cleanMarkdown)
+ */
+export function cleanSnippet(text: string): string {
+  if (!text) return '';
+  
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')     // Remove **bold** formatting
+    .replace(/\*([^*]+)\*/g, '$1')         // Remove *italic* formatting
+    .replace(/^Toku:\s*/i, '')            // Remove "Toku:" prefix
+    .replace(/^\s*#+\s*/, '')             // Remove heading markers
+    .replace(/^\s*\d+\.\s*/gm, '')       // Remove numbered list markers
+    .replace(/^\s*[-*+]\s*/gm, '')        // Remove bullet points
+    .replace(/\n+/g, ' ')                 // Replace line breaks with spaces
+    .replace(/\s+/g, ' ')                 // Normalize whitespace
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to text only
+    .replace(/`([^`]+)`/g, '$1')          // Remove code formatting
+    .trim();
+}
+
+/**
  * Format article type for display
  */
 export function formatArticleType(type: string): string {

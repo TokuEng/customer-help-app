@@ -19,3 +19,4 @@ echo "Then update the ingestion script to use:"
 echo "  MEILI_HOST=http://localhost:7701"
 echo ""
 echo "💡 Don't have a droplet with access? Create a small temporary one in the same VPC!"
+

@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { Clock, Calendar } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/Badge';
 import { formatDistanceToNow } from 'date-fns';
-import { cleanMarkdown, formatArticleType } from '@/lib/text-utils';
+import { cleanMarkdown, cleanSnippet, formatArticleType } from '@/lib/text-utils';
+import { Icon } from '@/components/ui/icon';
 
 interface ResultCardProps {
   title: string;
@@ -26,59 +26,47 @@ export function ResultCard({
   updatedAt,
   snippet,
 }: ResultCardProps) {
-  const typeColors: Record<string, string> = {
-    'how-to': 'bg-blue-100 text-blue-800',
-    'guide': 'bg-green-100 text-green-800',
-    'policy': 'bg-purple-100 text-purple-800',
-    'faq': 'bg-yellow-100 text-yellow-800',
-    'process': 'bg-orange-100 text-orange-800',
-    'info': 'bg-gray-100 text-gray-800',
-  };
-
-  const categoryColors: Record<string, string> = {
-    'Library': 'bg-indigo-100 text-indigo-800',
-    'Token Payroll': 'bg-teal-100 text-teal-800',
-    'Benefits': 'bg-pink-100 text-pink-800',
-    'Policy': 'bg-purple-100 text-purple-800',
-  };
 
   return (
-    <Link href={`/a/${slug}`}>
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader>
-          <div className="flex items-start justify-between mb-2">
-            <CardTitle className="text-xl line-clamp-2">{cleanMarkdown(title)}</CardTitle>
-            <div className="flex gap-2 ml-4">
-              <Badge variant="outline" className={typeColors[type] || typeColors.info}>
-                {formatArticleType(type)}
-              </Badge>
-              <Badge variant="outline" className={categoryColors[category] || 'bg-gray-100 text-gray-800'}>
-                {category}
-              </Badge>
+    <div className="mb-6">
+      <Link href={`/a/${slug}`}>
+        <Card className="hover:shadow-lg hover:outline hover:outline-1 hover:outline-primary transition-all rounded-lg bg-white border border-gray-100 shadow-sm">
+        <CardHeader className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+            <CardTitle className="text-base sm:text-lg font-semibold line-clamp-2 flex-1 text-gray-900">
+              {cleanMarkdown(title)}
+            </CardTitle>
+            <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
+              <Badge type={formatArticleType(type)} />
+              <Badge category={category} />
             </div>
           </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5 font-medium">
+              <Icon name="clock" className="w-3.5 h-3.5" />
               {readingTime} min read
             </span>
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {formatDistanceToNow(new Date(updatedAt), { addSuffix: true })}
+            <span className="flex items-center gap-1.5 font-medium">
+              <Icon name="calendar" className="w-3.5 h-3.5" />
+              Updated {formatDistanceToNow(new Date(updatedAt), { addSuffix: true })}
             </span>
           </div>
         </CardHeader>
-        <CardContent>
-          {snippet ? (
-            <p className="text-sm text-muted-foreground line-clamp-3" 
-               dangerouslySetInnerHTML={{ 
-                 __html: snippet.replace(/\*\*/g, '<strong>').replace(/\*/g, '<em>') 
-               }} />
-          ) : summary ? (
-            <CardDescription className="line-clamp-3">{cleanMarkdown(summary)}</CardDescription>
-          ) : null}
-        </CardContent>
+        {(snippet || summary) && (
+          <CardContent className="pt-0 px-3 pb-3 sm:px-4 sm:pb-4">
+            {snippet ? (
+              <p className="text-sm text-gray-600 line-clamp-2 leading-normal">
+                {cleanSnippet(snippet)}
+              </p>
+            ) : summary ? (
+              <p className="text-sm text-gray-600 line-clamp-2 leading-normal">
+                {cleanMarkdown(summary)}
+              </p>
+            ) : null}
+          </CardContent>
+        )}
       </Card>
-    </Link>
+      </Link>
+    </div>
   );
 }

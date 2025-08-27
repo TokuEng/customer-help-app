@@ -8,6 +8,9 @@
   --color-foreground: hsl(var(--foreground));
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-50: var(--toku-50);
+  --color-primary-500: var(--toku-500);
+  --color-primary-700: var(--toku-700);
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-destructive: hsl(var(--destructive));
@@ -24,10 +27,21 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
 }
 
 @layer base {
   :root {
+    /* Toku Brand Colors */
+    --toku: #1F5AE0;        /* PRIMARY — replace here if your official hex differs */
+    --toku-700: #1748B8;
+    --toku-500: #3C73FF;
+    --toku-50:  #EEF4FF;
+    
+    /* Font */
+    --font-nunito: 'Nunito', sans-serif;
+
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -37,8 +51,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 219 74% 50%;  /* Toku blue in HSL */
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -54,7 +68,7 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: var(--toku);    /* focus ring */
 
     --radius: 0.5rem;
   }
@@ -96,5 +110,65 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Brand-specific utility classes */
+.brand-gradient { 
+  background: linear-gradient(90deg, var(--toku) 0%, var(--toku-500) 100%); 
+}
+
+.brand-surface { 
+  background: var(--toku-50); 
+}
+
+/* Responsive utility classes */
+.container-responsive {
+  @apply container mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Improved text clamping */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Mobile-optimized spacing */
+.space-y-mobile > * + * {
+  margin-top: 1rem;
+}
+
+@media (min-width: 640px) {
+  .space-y-mobile > * + * {
+    margin-top: 1.5rem;
+  }
+}
+
+/* Typography styling for prose */
+@layer components {
+  .prose-brand {
+    --tw-prose-links: var(--toku);
+    --tw-prose-bold: #0b1220;
+  }
+  
+  .prose-brand a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+  
+  .prose-brand blockquote {
+    border-left-color: var(--toku);
+    background: var(--toku-50);
+    padding: 1rem;
+    border-radius: 0.5rem;
   }
 }

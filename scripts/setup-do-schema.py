@@ -56,3 +56,4 @@ except FileNotFoundError:
     print("   Ubuntu: sudo apt-get install postgresql-client")
 except Exception as e:
     print(f"\n❌ Error: {e}")
+

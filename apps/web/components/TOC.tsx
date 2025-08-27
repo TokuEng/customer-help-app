@@ -22,7 +22,7 @@ export function TOC({ items }: TOCProps) {
       const observer = new IntersectionObserver(
         (entries) => {
           // Find the entry that's most visible
-          const mostVisible = entries.find(entry => entry.isIntersecting);
+          let mostVisible = entries.find(entry => entry.isIntersecting);
           if (mostVisible) {
             setActiveId(mostVisible.target.id);
           }

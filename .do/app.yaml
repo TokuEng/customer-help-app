@@ -54,6 +54,18 @@ services:
         value: MJHXGOOpaglqgS3f+4l3P6aYXfoYlE3LghMSHt9w7gw=
       - key: WEB_BASE_URL
         value: ${APP_URL}
+      - key: SPACES_KEY
+        type: SECRET
+        value: DO801NJZGMF7ZX6CH8NJ
+      - key: SPACES_SECRET
+        type: SECRET
+        value: 6JNNOAJ5DvMT1iApZCPGK4BnpHCUv7TDCteCUWtcEX0
+      - key: SPACES_BUCKET
+        value: customer-help-app-notion-images
+      - key: SPACES_REGION
+        value: sfo3
+      - key: SPACES_CDN_ENDPOINT
+        value: https://customer-help-app-notion-images.sfo3.cdn.digitaloceanspaces.com
     routes:
       - path: /api
 

@@ -73,7 +73,11 @@ async def sync_notion_content():
                     print(f"Skipping unchanged page: {page_detail['title']}")
                     return None
                 
-                print(f"Processing page: {page_detail['title']}")
+                print(f"Processing page: {page_detail['title']} (Category: {page_info['category']})")
+                
+                # Special logging for Benefits content
+                if page_info['category'] == 'Benefits':
+                    print(f"🎯 BENEFITS CONTENT DETECTED: {page_detail['title']}")
                 
                 # Upsert to database and indexes
                 async with db_pool.acquire() as conn:
@@ -85,7 +89,7 @@ async def sync_notion_content():
                             page_info['category']
                         )
                 
-                print(f"Successfully processed: {page_detail['title']} -> {slug}")
+                print(f"Successfully processed: {page_detail['title']} -> {slug} (Category: {page_info['category']})")
                 return slug
                 
             except Exception as e:

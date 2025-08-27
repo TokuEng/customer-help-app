@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
+import { Icon } from '@/components/ui/icon';
 
 interface FeedbackProps {
   articleId: string;
@@ -50,7 +50,7 @@ export function Feedback({ articleId }: FeedbackProps) {
                   disabled={isSubmitting}
                   className="gap-2"
                 >
-                  <ThumbsUp className="h-4 w-4" />
+                  <Icon name="thumbs-up" className="h-4 w-4" />
                   Yes
                 </Button>
                 <Button
@@ -60,7 +60,7 @@ export function Feedback({ articleId }: FeedbackProps) {
                   disabled={isSubmitting}
                   className="gap-2"
                 >
-                  <ThumbsDown className="h-4 w-4" />
+                  <Icon name="thumbs-down" className="h-4 w-4" />
                   No
                 </Button>
               </div>

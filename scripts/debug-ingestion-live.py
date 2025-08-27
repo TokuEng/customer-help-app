@@ -76,3 +76,4 @@ if __name__ == "__main__":
     print("🐛 Live Ingestion Debugger")
     print("=" * 50)
     asyncio.run(test_components())
+
