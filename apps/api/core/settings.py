@@ -25,8 +25,16 @@ class Settings(BaseSettings):
     api_prefix: str = "/api"
     cors_origins: list[str] = ["*"]
     
+    # DigitalOcean Spaces (for permanent image storage)
+    spaces_key: Optional[str] = None
+    spaces_secret: Optional[str] = None
+    spaces_bucket: Optional[str] = None
+    spaces_region: str = "sfo3"
+    spaces_cdn_endpoint: Optional[str] = None
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"  # Ignore extra environment variables
 
 settings = Settings()

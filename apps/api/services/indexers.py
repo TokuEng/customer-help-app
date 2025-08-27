@@ -1,17 +1,18 @@
 import asyncpg
-import meilisearch_python_async as meilisearch
+import meilisearch
 from typing import List, Dict, Tuple
 import uuid
 import re
 from datetime import datetime
-from services.chunking import ChunkingService
-from services.embeddings import EmbeddingsService
+from apps.api.services.chunking import ChunkingService
+from apps.api.services.embeddings import EmbeddingsService
 import numpy as np
 
 class IndexerService:
     def __init__(self):
         self.chunking_service = ChunkingService()
         self.embeddings_service = EmbeddingsService()
+        self.meili_settings_configured = False
     
     async def upsert_article(
         self, 
@@ -80,19 +81,29 @@ class IndexerService:
             article_id
         )
         
-        # Insert new chunks with embeddings
-        for chunk, embedding in zip(chunks, embeddings):
-            await pg_conn.execute(
+        # Insert new chunks with embeddings in batch
+        if chunks and embeddings:
+            chunk_data = []
+            for chunk, embedding in zip(chunks, embeddings):
+                # Convert embedding to pgvector format: '[0.1, 0.2, ...]'
+                if isinstance(embedding, np.ndarray):
+                    embedding_str = f"[{','.join(map(str, embedding.tolist()))}]"
+                else:
+                    embedding_str = f"[{','.join(map(str, embedding))}]"
+                
+                chunk_data.append((article_id, chunk['heading_path'], chunk['text'], embedding_str))
+            
+            # Batch insert all chunks
+            await pg_conn.executemany(
                 """
                 INSERT INTO chunks (article_id, heading_path, text, embedding)
-                VALUES ($1, $2, $3, $4)
+                VALUES ($1, $2, $3, $4::vector)
                 """,
-                article_id, chunk['heading_path'], chunk['text'], 
-                embedding.tolist()  # Convert numpy array to list for storage
+                chunk_data
             )
         
         # Index in Meilisearch
-        await self._index_to_meilisearch(
+        self._index_to_meilisearch(
             meili_client, article_id, slug, article_data['title'],
             summary, article_data['content_md'], chunks,
             article_type, category, tags, persona,
@@ -101,7 +112,7 @@ class IndexerService:
         
         return slug
     
-    async def _index_to_meilisearch(
+    def _index_to_meilisearch(
         self, client: meilisearch.Client, article_id: uuid.UUID,
         slug: str, title: str, summary: str, content: str,
         chunks: List[Dict], article_type: str, category: str,
@@ -128,10 +139,16 @@ class IndexerService:
         }
         
         # Add or update document
-        await index.add_documents([doc])
+        index.add_documents([doc])
         
-        # Update index settings if needed
-        await index.update_settings({
+        # Configure settings only once
+        if not self.meili_settings_configured:
+            self._configure_meilisearch_settings(index)
+            self.meili_settings_configured = True
+    
+    def _configure_meilisearch_settings(self, index):
+        """Configure Meilisearch index settings (call once)"""
+        index.update_settings({
             'searchableAttributes': [
                 'title',
                 'summary',
@@ -233,25 +250,77 @@ class IndexerService:
         return tags
     
     def _generate_summary(self, content: str, max_length: int = 200) -> str:
-        """Generate a summary from content"""
-        # Simple approach: take first paragraph or first N characters
-        paragraphs = content.strip().split('\n\n')
+        """Generate an intelligent summary from content"""
+        import re
         
-        for para in paragraphs:
-            # Skip headers and very short paragraphs
-            if para.startswith('#') or len(para) < 50:
-                continue
-            
-            # Use first substantial paragraph
-            summary = para.strip()
-            if len(summary) > max_length:
-                summary = summary[:max_length].rsplit(' ', 1)[0] + '...'
-            
-            return summary
+        if not content:
+            return ""
+        
+        # Look for purpose statements first
+        purpose_patterns = [
+            r'🎯\s*Purpose\s*:?\s*([^.!?]*[.!?])',
+            r'Purpose\s*:?\s*([^.!?]*[.!?])',
+            r'This\s+(?:article|guide|document)\s+(?:explains|shows|helps)\s+([^.!?]*[.!?])',
+            r'(?:Learn|Understand)\s+(?:how\s+to\s+)?([^.!?]*[.!?])'
+        ]
+        
+        for pattern in purpose_patterns:
+            match = re.search(pattern, content, re.IGNORECASE)
+            if match and match.group(1):
+                purpose = self._clean_markdown(match.group(1).strip())
+                if len(purpose) <= max_length:
+                    return purpose
+        
+        # Remove images and clean markdown
+        cleaned = re.sub(r'!\[([^\]]*)\]\([^)]+\)', '', content)
+        cleaned = self._clean_markdown(cleaned)
+        
+        # Clean up whitespace
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        
+        # Extract first meaningful paragraph or sentences
+        paragraphs = cleaned.split('\n\n')
+        for paragraph in paragraphs:
+            paragraph = paragraph.strip()
+            if len(paragraph) > 30:  # Only meaningful paragraphs
+                if len(paragraph) <= max_length:
+                    return paragraph
+                else:
+                    # Truncate to sentences
+                    sentences = re.split(r'[.!?]\s+', paragraph)
+                    summary = ""
+                    for sentence in sentences:
+                        sentence = sentence.strip()
+                        if len(sentence) < 10:
+                            continue
+                        if len(summary) + len(sentence) + 2 > max_length:
+                            break
+                        summary += sentence + ". "
+                    
+                    if summary:
+                        return summary.strip()
         
         # Fallback: use beginning of content
-        summary = content[:max_length].strip()
-        if len(content) > max_length:
-            summary = summary.rsplit(' ', 1)[0] + '...'
-        
+        if len(cleaned) > max_length:
+            summary = cleaned[:max_length-3].rsplit(' ', 1)[0] + '...'
+        else:
+            summary = cleaned
+            
         return summary
+    
+    def _clean_markdown(self, text: str) -> str:
+        """Remove markdown formatting from text"""
+        if not text:
+            return ""
+        
+        import re
+        
+        # Remove markdown formatting
+        text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)  # Bold
+        text = re.sub(r'\*([^*]+)\*', r'\1', text)      # Italic
+        text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)  # Links
+        text = re.sub(r'`([^`]+)`', r'\1', text)        # Code
+        text = re.sub(r'^#+\s+', '', text, flags=re.MULTILINE)  # Headers
+        text = re.sub(r'^Toku:\s*', '', text, flags=re.IGNORECASE)  # Remove Toku prefix
+        
+        return text.strip()

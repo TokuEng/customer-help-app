@@ -23,8 +23,7 @@ fi
 # Setup API
 echo "🐍 Setting up API..."
 cd ../api
-python3 -m venv venv
-source venv/bin/activate
+conda activate customer-app-toku
 pip install -r requirements.txt
 if [ ! -f .env ]; then
     cp env.template .env

@@ -3,6 +3,7 @@ import { Clock, Calendar } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { cleanMarkdown, formatArticleType } from '@/lib/text-utils';
 
 interface ResultCardProps {
   title: string;
@@ -46,10 +47,10 @@ export function ResultCard({
       <Card className="hover:shadow-md transition-shadow">
         <CardHeader>
           <div className="flex items-start justify-between mb-2">
-            <CardTitle className="text-xl line-clamp-2">{title}</CardTitle>
+            <CardTitle className="text-xl line-clamp-2">{cleanMarkdown(title)}</CardTitle>
             <div className="flex gap-2 ml-4">
               <Badge variant="outline" className={typeColors[type] || typeColors.info}>
-                {type}
+                {formatArticleType(type)}
               </Badge>
               <Badge variant="outline" className={categoryColors[category] || 'bg-gray-100 text-gray-800'}>
                 {category}
@@ -70,9 +71,11 @@ export function ResultCard({
         <CardContent>
           {snippet ? (
             <p className="text-sm text-muted-foreground line-clamp-3" 
-               dangerouslySetInnerHTML={{ __html: snippet }} />
+               dangerouslySetInnerHTML={{ 
+                 __html: snippet.replace(/\*\*/g, '<strong>').replace(/\*/g, '<em>') 
+               }} />
           ) : summary ? (
-            <CardDescription className="line-clamp-3">{summary}</CardDescription>
+            <CardDescription className="line-clamp-3">{cleanMarkdown(summary)}</CardDescription>
           ) : null}
         </CardContent>
       </Card>

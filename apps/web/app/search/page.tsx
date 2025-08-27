@@ -1,33 +1,28 @@
 import { Suspense } from 'react';
 import { SearchBar } from '@/components/SearchBar';
 import { ResultCard } from '@/components/ResultCard';
+import { SearchFilters } from '@/components/SearchFilters';
 import { api } from '@/lib/api';
 
 interface SearchPageProps {
-  searchParams: {
+  searchParams: Promise<{
     q?: string;
     category?: string;
     type?: string;
-  };
+  }>;
 }
 
 async function SearchResults({ searchParams }: SearchPageProps) {
-  const query = searchParams.q || '';
+  const params = await searchParams;
+  const query = params.q || '';
   
-  if (!query) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">Enter a search term to find articles</p>
-      </div>
-    );
-  }
-
   try {
     const results = await api.search({
-      q: query,
+      q: query || '*',  // Use wildcard to get all articles when no query
+      top_k: 50,  // Show up to 50 results instead of default 10
       filters: {
-        category: searchParams.category,
-        type: searchParams.type,
+        category: params.category,
+        type: params.type,
       },
     });
 
@@ -43,7 +38,7 @@ async function SearchResults({ searchParams }: SearchPageProps) {
     return (
       <div className="space-y-4">
         <p className="text-sm text-gray-600 mb-4">
-          Found {results.length} results for "{query}"
+          {query ? `Found ${results.length} results for "${query}"` : `Showing ${results.length} articles`}
         </p>
         {results.map((result) => (
           <ResultCard
@@ -71,7 +66,9 @@ async function SearchResults({ searchParams }: SearchPageProps) {
   }
 }
 
-export default function SearchPage({ searchParams }: SearchPageProps) {
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const params = await searchParams;
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
@@ -79,7 +76,7 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
           <h1 className="text-3xl font-bold mb-8">Search Help Center</h1>
           
           <div className="mb-8">
-            <SearchBar defaultValue={searchParams.q} />
+            <SearchBar defaultValue={params.q} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -87,54 +84,10 @@ export default function SearchPage({ searchParams }: SearchPageProps) {
             <aside className="lg:col-span-1">
               <div className="bg-white rounded-lg p-6 shadow-sm">
                 <h3 className="font-semibold mb-4">Filters</h3>
-                
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Category</h4>
-                    <div className="space-y-2">
-                      {['Library', 'Token Payroll', 'Benefits', 'Policy'].map((cat) => (
-                        <label key={cat} className="flex items-center">
-                          <input
-                            type="radio"
-                            name="category"
-                            value={cat}
-                            checked={searchParams.category === cat}
-                            className="mr-2"
-                            onChange={() => {
-                              const url = new URL(window.location.href);
-                              url.searchParams.set('category', cat);
-                              window.location.href = url.toString();
-                            }}
-                          />
-                          <span className="text-sm">{cat}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Type</h4>
-                    <div className="space-y-2">
-                      {['how-to', 'guide', 'policy', 'faq', 'process', 'info'].map((type) => (
-                        <label key={type} className="flex items-center">
-                          <input
-                            type="radio"
-                            name="type"
-                            value={type}
-                            checked={searchParams.type === type}
-                            className="mr-2"
-                            onChange={() => {
-                              const url = new URL(window.location.href);
-                              url.searchParams.set('type', type);
-                              window.location.href = url.toString();
-                            }}
-                          />
-                          <span className="text-sm capitalize">{type}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <SearchFilters 
+                  currentCategory={params.category} 
+                  currentType={params.type} 
+                />
               </div>
             </aside>
 

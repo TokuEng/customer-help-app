@@ -5,18 +5,22 @@ import { api } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { TOC } from '@/components/TOC';
 import { Feedback } from '@/components/Feedback';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Link from 'next/link';
+import { VisitTracker } from '@/components/VisitTracker';
+import { ArticleContent } from '@/components/ArticleContent';
+import { cleanMarkdown, formatArticleType } from '@/lib/text-utils';
+import '../../article.css';
 
 interface ArticlePageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: ArticlePageProps) {
+  const { slug } = await params;
   try {
-    const article = await api.getArticle(params.slug);
+    const article = await api.getArticle(slug);
     return {
       title: `${article.title} - Toku Help Center`,
       description: article.summary || `Learn about ${article.title}`,
@@ -29,15 +33,16 @@ export async function generateMetadata({ params }: ArticlePageProps) {
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
+  const { slug } = await params;
   let article;
   let relatedArticles;
 
   try {
     [article, relatedArticles] = await Promise.all([
-      api.getArticle(params.slug),
-      api.getRelatedArticles(params.slug, 5),
+      api.getArticle(slug),
+      api.getRelatedArticles(slug, 5),
     ]);
-  } catch (error) {
+  } catch {
     notFound();
   }
 
@@ -52,24 +57,25 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <VisitTracker articleId={article.id} />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Main Content */}
             <article className="lg:col-span-3">
-              <div className="bg-white rounded-lg shadow-sm p-8">
+              <div className="bg-white rounded-lg shadow-sm p-8 md:p-12">
                 {/* Header */}
                 <header className="mb-8">
                   <div className="flex gap-2 mb-4">
                     <Badge variant="outline" className={typeColors[article.type] || typeColors.info}>
-                      {article.type}
+                      {formatArticleType(article.type)}
                     </Badge>
                     <Badge variant="outline">
                       {article.category}
                     </Badge>
                   </div>
                   
-                  <h1 className="text-3xl md:text-4xl font-bold mb-4">{article.title}</h1>
+                  <h1 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-gray-900">{cleanMarkdown(article.title)}</h1>
                   
                   <div className="flex items-center gap-4 text-sm text-gray-600">
                     <span className="flex items-center gap-1">
@@ -83,15 +89,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   </div>
                   
                   {article.summary && (
-                    <p className="mt-4 text-lg text-gray-600">{article.summary}</p>
+                    <p className="mt-6 text-xl leading-relaxed text-gray-600 border-l-4 border-blue-500 pl-6 py-4 bg-blue-50 rounded-r-lg">{cleanMarkdown(article.summary)}</p>
                   )}
                 </header>
 
                 {/* Content */}
-                <div 
-                  className="prose prose-gray max-w-none"
-                  dangerouslySetInnerHTML={{ __html: article.content_html }}
-                />
+                <ArticleContent content={article.content_html} />
 
                 {/* Feedback */}
                 <div className="mt-12">
@@ -104,33 +107,43 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             <aside className="lg:col-span-1 space-y-6">
               {/* Table of Contents */}
               {article.toc.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+                  <h3 className="font-semibold mb-4 text-gray-900 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                    Contents
+                  </h3>
                   <TOC items={article.toc} />
                 </div>
               )}
 
               {/* Related Articles */}
               {relatedArticles.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h3 className="font-semibold mb-4">Related Articles</h3>
+                <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+                  <h3 className="font-semibold mb-4 text-gray-900 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    Related
+                  </h3>
                   <div className="space-y-3">
                     {relatedArticles.map((related) => (
-                      <Link key={related.slug} href={`/a/${related.slug}`}>
-                        <Card className="hover:shadow-md transition-shadow">
-                          <CardHeader className="p-4">
-                            <CardTitle className="text-base line-clamp-2">
-                              {related.title}
-                            </CardTitle>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">
-                                {related.type}
-                              </Badge>
-                              <span className="text-xs text-gray-500">
-                                {related.reading_time_min} min
-                              </span>
-                            </div>
-                          </CardHeader>
-                        </Card>
+                      <Link key={related.slug} href={`/a/${related.slug}`} className="block group">
+                        <div className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200">
+                          <h4 className="font-medium text-sm group-hover:text-blue-700 transition-colors mb-2 leading-snug line-clamp-2">
+                            {cleanMarkdown(related.title)}
+                          </h4>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <Badge variant="outline" className="text-xs bg-gray-50">
+                              {formatArticleType(related.type)}
+                            </Badge>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {related.reading_time_min} min
+                            </span>
+                          </div>
+                        </div>
                       </Link>
                     ))}
                   </div>

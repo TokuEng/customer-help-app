@@ -2,13 +2,29 @@ from notion_client import AsyncClient
 from typing import List, Dict, Optional, Tuple
 import markdown
 from bs4 import BeautifulSoup
-from core.settings import settings
+from apps.api.core.settings import settings
 import re
 from datetime import datetime
+from .image_storage import ImageStorageService
 
 class NotionService:
     def __init__(self):
         self.client = AsyncClient(auth=settings.notion_token)
+        # Initialize image storage service if Spaces are configured
+        self.image_storage = None
+        if all([settings.spaces_key, settings.spaces_secret, settings.spaces_bucket]):
+            try:
+                self.image_storage = ImageStorageService()
+                print("✅ ImageStorageService initialized successfully")
+            except Exception as e:
+                print(f"❌ Failed to initialize ImageStorageService: {e}")
+                self.image_storage = None
+        else:
+            missing = []
+            if not settings.spaces_key: missing.append('SPACES_KEY')
+            if not settings.spaces_secret: missing.append('SPACES_SECRET') 
+            if not settings.spaces_bucket: missing.append('SPACES_BUCKET')
+            print(f"⚠️  ImageStorageService not initialized. Missing: {missing}")
     
     async def fetch_index_blocks(self, index_page_id: str) -> List[Dict]:
         """Fetch all blocks from the index page with pagination"""
@@ -38,34 +54,37 @@ class NotionService:
             block_type = block['type']
             
             # Update current heading when we encounter a heading block
-            if block_type in ['heading_2', 'heading_3']:
+            if block_type in ['heading_1', 'heading_2', 'heading_3']:
                 heading_text = self._extract_text_from_block(block)
                 if heading_text:
                     # Map to our categories
                     if 'Library' in heading_text:
                         current_heading = 'Library'
-                    elif 'Token Payroll' in heading_text:
+                    elif 'Token Payroll' in heading_text or 'Payroll' in heading_text:
                         current_heading = 'Token Payroll'
-                    elif 'Benefits' in heading_text:
+                    elif 'Benefits' in heading_text or 'Benefit' in heading_text:
                         current_heading = 'Benefits'
-                    elif 'Policy' in heading_text:
+                    elif 'Policy' in heading_text or 'Policies' in heading_text:
                         current_heading = 'Policy'
+                    else:
+                        # Use the heading text as-is if it doesn't match predefined categories
+                        current_heading = heading_text
             
             # Extract page links
             elif block_type == 'child_page':
                 page_id = block['id']
-                if current_heading:
-                    pages.append({
-                        'page_id': page_id,
-                        'category': current_heading
-                    })
+                # Always add child pages, use default category if none set
+                pages.append({
+                    'page_id': page_id,
+                    'category': current_heading or 'Library'
+                })
             
             elif block_type == 'link_to_page':
                 page_id = block['link_to_page'].get('page_id')
-                if page_id and current_heading:
+                if page_id:
                     pages.append({
                         'page_id': page_id,
-                        'category': current_heading
+                        'category': current_heading or 'Library'
                     })
             
             # Check for inline page mentions in text blocks
@@ -74,16 +93,18 @@ class NotionService:
                 for text_obj in rich_text:
                     if text_obj.get('type') == 'mention' and text_obj['mention'].get('type') == 'page':
                         page_id = text_obj['mention']['page']['id']
-                        if current_heading:
-                            pages.append({
-                                'page_id': page_id,
-                                'category': current_heading
-                            })
+                        pages.append({
+                            'page_id': page_id,
+                            'category': current_heading or 'Library'
+                        })
         
         return pages
     
     async def fetch_page_detail(self, page_id: str) -> Dict:
-        """Fetch page metadata and content"""
+        """Fetch page metadata and content with immediate image processing"""
+        import time
+        start_time = time.time()
+        
         # Get page properties
         page = await self.client.pages.retrieve(page_id=page_id)
         
@@ -93,17 +114,31 @@ class NotionService:
         # Get last edited time
         last_edited_time = datetime.fromisoformat(page['last_edited_time'].replace('Z', '+00:00'))
         
-        # Get all blocks
+        # Get all blocks (fresh to avoid expired URLs)
+        fetch_start = time.time()
         blocks = await self._fetch_all_blocks(page_id)
+        fetch_time = time.time() - fetch_start
+        print(f"⏱️  Fetched {len(blocks)} blocks in {fetch_time:.2f}s")
         
-        # Convert blocks to markdown
-        markdown_content = self._blocks_to_markdown(blocks)
+        # Convert blocks to markdown (with immediate image processing)
+        markdown_start = time.time()
+        markdown_content = await self._blocks_to_markdown(blocks, page_id)
+        markdown_time = time.time() - markdown_start
+        print(f"⏱️  Processed blocks to markdown in {markdown_time:.2f}s")
         
         # Convert markdown to HTML
         html_content = markdown.markdown(
             markdown_content,
             extensions=['extra', 'codehilite', 'toc']
         )
+        
+        total_time = time.time() - start_time
+        print(f"⏱️  Total page processing: {total_time:.2f}s")
+        
+        # Check if we successfully stored any images
+        spaces_urls = markdown_content.count('digitaloceanspaces.com')
+        notion_urls = markdown_content.count('prod-files-secure') + markdown_content.count('secure.notion-static.com')
+        print(f"🖼️  Images: {spaces_urls} stored in Spaces, {notion_urls} still using Notion URLs")
         
         return {
             'page_id': page_id,
@@ -114,7 +149,8 @@ class NotionService:
         }
     
     async def _fetch_all_blocks(self, page_id: str) -> List[Dict]:
-        """Recursively fetch all blocks including nested ones"""
+        """Recursively fetch all blocks including nested ones - always fresh to avoid expired URLs"""
+        print(f"🔄 Fetching fresh blocks for page {page_id}...")
         blocks = []
         
         async def fetch_children(block_id: str, level: int = 0):
@@ -162,7 +198,53 @@ class NotionService:
         # Fallback to page ID
         return f"Page {page['id']}"
     
-    def _blocks_to_markdown(self, blocks: List[Dict]) -> str:
+    def _get_caption_from_block(self, block: Dict) -> str:
+        """Extract caption from image block if available"""
+        image_data = block.get('image', {})
+        caption_array = image_data.get('caption', [])
+        if caption_array:
+            return ''.join(text.get('plain_text', '') for text in caption_array)
+        return ""
+    
+    async def _get_fresh_file_url(self, block_id: str) -> tuple[str, str]:
+        """
+        Get fresh file URL and expiry time for a specific block
+        Returns (url, expiry_time) or (None, None) if failed
+        """
+        try:
+            print(f"🔄 Getting fresh URL for block {block_id}...")
+            # Fetch the specific block to get fresh file URL
+            block = await self.client.blocks.retrieve(block_id=block_id)
+            
+            if block.get('type') == 'image':
+                image_block = block.get('image', {})
+                
+                # Check for file type (Notion-hosted)
+                if 'file' in image_block:
+                    file_info = image_block['file']
+                    url = file_info.get('url')
+                    expiry_time = file_info.get('expiry_time')
+                    
+                    if url and expiry_time:
+                        print(f"✅ Fresh URL expires: {expiry_time}")
+                        return url, expiry_time
+                    elif url:
+                        print(f"✅ Fresh URL (no expiry field)")
+                        return url, None
+                
+                # External URLs don't expire
+                elif 'external' in image_block:
+                    url = image_block['external'].get('url')
+                    if url:
+                        print(f"🔗 External URL (no expiry): {url[:50]}...")
+                        return url, None
+                        
+        except Exception as e:
+            print(f"❌ Failed to get fresh file URL for {block_id}: {e}")
+            
+        return None, None
+    
+    async def _blocks_to_markdown(self, blocks: List[Dict], page_id: str) -> str:
         """Convert Notion blocks to markdown"""
         lines = []
         
@@ -209,9 +291,53 @@ class NotionService:
                 lines.append(f"{indent}---\n")
             
             elif block_type == 'image':
-                url = block['image'].get('file', {}).get('url', '')
-                if url:
-                    lines.append(f"{indent}![Image]({url})\n")
+                block_id = block['id']
+                caption = self._get_caption_from_block(block)
+                
+                # Get fresh URL for this specific image block
+                fresh_url, expiry_time = await self._get_fresh_file_url(block_id)
+                
+                if fresh_url:
+                    url = fresh_url
+                    
+                    # Try to store the image permanently if storage service is available
+                    if self.image_storage:
+                        try:
+                            permanent_url = await self.image_storage.store_notion_image(
+                                page_id, block_id, url
+                            )
+                            if permanent_url:
+                                url = permanent_url
+                                alt_text = caption or "Image"
+                                lines.append(f"{indent}![{alt_text}]({url})\n")
+                                print(f"✅ Stored image permanently: {permanent_url}")
+                            else:
+                                # Storage failed, use fresh URL with expiry info
+                                alt_text = caption or "Screenshot or diagram"
+                                lines.append(f"{indent}![{alt_text}]({url})\n")
+                                if expiry_time:
+                                    lines.append(f"{indent}*Note: This image expires at {expiry_time}*\n")
+                                else:
+                                    lines.append(f"{indent}*Note: This image is hosted on Notion and may expire*\n")
+                        except Exception as e:
+                            print(f"⚠️  Image storage failed for {url}: {e}")
+                            # Fall back to fresh URL
+                            alt_text = caption or "Screenshot or diagram"
+                            lines.append(f"{indent}![{alt_text}]({url})\n")
+                            if expiry_time:
+                                lines.append(f"{indent}*Note: This image expires at {expiry_time}*\n")
+                            else:
+                                lines.append(f"{indent}*Note: This image is hosted on Notion and may expire*\n")
+                    else:
+                        # No storage service configured, use fresh URL
+                        alt_text = caption or "Screenshot or diagram"
+                        lines.append(f"{indent}![{alt_text}]({url})\n")
+                        if expiry_time:
+                            lines.append(f"{indent}*Note: This image expires at {expiry_time}*\n")
+                        else:
+                            lines.append(f"{indent}*Note: This image is hosted on Notion and may expire*\n")
+                else:
+                    print(f"❌ Could not get fresh URL for image block {block_id}")
         
         return '\n'.join(lines)
     

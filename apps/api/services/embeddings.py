@@ -1,7 +1,7 @@
 from typing import List
 import numpy as np
 import openai
-from core.settings import settings
+from apps.api.core.settings import settings
 import asyncio
 
 class EmbeddingsService:
@@ -22,23 +22,28 @@ class EmbeddingsService:
             return await self._embed_local(texts)
     
     async def _embed_openai(self, texts: List[str]) -> List[np.ndarray]:
-        """Generate embeddings using OpenAI API"""
+        """Generate embeddings using OpenAI API with parallel batch processing"""
         # OpenAI has a limit on batch size
         batch_size = 100
-        all_embeddings = []
         
-        for i in range(0, len(texts), batch_size):
-            batch = texts[i:i + batch_size]
-            
+        # Create batches
+        batches = [texts[i:i + batch_size] for i in range(0, len(texts), batch_size)]
+        
+        async def process_batch(batch):
             # Make async call to OpenAI
             response = await asyncio.to_thread(
                 openai.embeddings.create,
                 input=batch,
                 model=self.model
             )
-            
-            # Extract embeddings
-            batch_embeddings = [np.array(item.embedding) for item in response.data]
+            return [np.array(item.embedding) for item in response.data]
+        
+        # Process all batches in parallel
+        batch_results = await asyncio.gather(*[process_batch(batch) for batch in batches])
+        
+        # Flatten results
+        all_embeddings = []
+        for batch_embeddings in batch_results:
             all_embeddings.extend(batch_embeddings)
         
         return all_embeddings

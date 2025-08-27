@@ -44,6 +44,15 @@ create table ingestion_state (
   constraint single_row check (id = 1)
 );
 
+-- Article views/visits tracking table
+create table article_views (
+  id bigserial primary key,
+  article_id uuid references articles(id) on delete cascade,
+  ip_address inet,
+  user_agent text,
+  viewed_at timestamptz default now()
+);
+
 -- Indexes
 create index idx_articles_slug on articles(slug);
 create index idx_articles_updated_at on articles(updated_at desc);
@@ -51,3 +60,5 @@ create index idx_articles_category on articles(category);
 create index idx_articles_type on articles(type);
 create index idx_chunks_article_id on chunks(article_id);
 create index idx_chunks_embedding on chunks using ivfflat (embedding vector_cosine_ops);
+create index idx_article_views_article_id on article_views(article_id);
+create index idx_article_views_viewed_at on article_views(viewed_at desc);

@@ -1,0 +1,61 @@
+name: customer-help-app
+region: sfo3
+
+services:
+  - name: web
+    github:
+      repo: TokuEng/customer-help-app
+      branch: main
+      deploy_on_push: true
+    source_dir: /apps/web
+    build_command: npm install && npm run build
+    run_command: npm start
+    http_port: 3000
+    instance_count: 1
+    instance_size_slug: basic-xs
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: ${APP_URL}/api
+      - key: REVALIDATE_TOKEN
+        type: SECRET
+        value: MJHXGOOpaglqgS3f+4l3P6aYXfoYlE3LghMSHt9w7gw=
+    routes:
+      - path: /
+  
+  - name: api
+    github:
+      repo: TokuEng/customer-help-app
+      branch: main
+      deploy_on_push: true
+    source_dir: /apps/api
+    dockerfile_path: /apps/api/Dockerfile
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xs
+    envs:
+      - key: DATABASE_URL
+        value: ${customer-help-db.DATABASE_URL}
+      - key: MEILI_HOST
+        value: http://10.124.0.39:7700
+      - key: MEILI_MASTER_KEY
+        type: SECRET
+        value: NzEzYTdkNjQ0N2FiYjFkODg0NzdjNzNk
+      - key: NOTION_TOKEN
+        type: SECRET
+        value: ntn_S31097131812gWkADDpZzrDN7Nv3wyyMLwbSbXKRQcC556
+      - key: NOTION_INDEX_PAGE_ID
+        value: 2030b95a751d80eaac8df6267041fb14
+      - key: EMBEDDINGS_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        type: SECRET
+        value: YOUR_NEW_OPENAI_KEY
+      - key: REVALIDATE_TOKEN
+        type: SECRET
+        value: MJHXGOOpaglqgS3f+4l3P6aYXfoYlE3LghMSHt9w7gw=
+      - key: WEB_BASE_URL
+        value: ${APP_URL}
+    routes:
+      - path: /api

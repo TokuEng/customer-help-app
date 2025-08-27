@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 import uuid
 from datetime import datetime
+from services.chunking import ChunkingService
 
 router = APIRouter()
 
@@ -47,33 +48,9 @@ async def get_article(request: Request, slug: str):
         if not article:
             raise HTTPException(status_code=404, detail="Article not found")
         
-        # Get chunks to build TOC
-        chunks = await conn.fetch(
-            """
-            SELECT heading_path
-            FROM chunks
-            WHERE article_id = $1
-            ORDER BY chunk_id
-            """,
-            article['id']
-        )
-        
-        # Build TOC from heading paths
-        toc = []
-        seen_headings = set()
-        for chunk in chunks:
-            if chunk['heading_path'] and chunk['heading_path'] not in seen_headings:
-                parts = chunk['heading_path'].split(' > ')
-                if parts:
-                    heading = parts[-1]
-                    level = len(parts)
-                    toc_id = heading.lower().replace(' ', '-').replace('/', '-')
-                    toc.append({
-                        'id': f"h-{toc_id}",
-                        'text': heading,
-                        'level': level
-                    })
-                    seen_headings.add(chunk['heading_path'])
+        # Build TOC from HTML content
+        chunking_service = ChunkingService()
+        toc = chunking_service.extract_headings_from_html(article['content_html'])
         
         return Article(
             id=str(article['id']),
