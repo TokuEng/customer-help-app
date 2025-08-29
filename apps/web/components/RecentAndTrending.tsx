@@ -12,7 +12,7 @@ interface RecentArticle {
 
 export default function RecentAndTrending() {
   const [recentArticles, setRecentArticles] = useState<RecentArticle[]>([]);
-  const [popularArticles, setPopularArticles] = useState<any[]>([]);
+  const [popularArticles, setPopularArticles] = useState<RecentArticle[]>([]);
   const [trendingTags] = useState<string[]>([
     "payroll", "benefits", "expenses", "onboarding", "leave", "tax", "policies"
   ]);

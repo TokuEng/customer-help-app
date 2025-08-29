@@ -1,6 +1,6 @@
 # Toku Customer Help Center - AI Engineering Guide
 
-**A production-ready hybrid search knowledge base with Notion CMS integration, vector embeddings, ISR-powered frontend, and contractor payment calendar.**
+**A production-ready hybrid search knowledge base with Notion CMS integration, vector embeddings, ISR-powered frontend, contractor payment calendar, and AI-assisted employer cost calculator.**
 
 ## 🏗️ Architecture Overview
 
@@ -68,6 +68,19 @@ class ChunkingService:
         # Heading path maintenance for context
 ```
 
+### 4. AI-Assisted Employer Cost Calculator
+- **Deterministic Math Engine**: Precise calculations for employer costs across 5+ countries
+- **Real-time Cost Breakdown**: Employee deductions, employer contributions, tax estimates
+- **AI-Powered Summaries**: GPT-4 generates client-ready emails with explanations
+- **Multi-Currency Support**: EUR, USD, GBP, HUF, INR with proper formatting
+- **Smart Disclaimers**: Context-aware caveats about estimates and variations
+
+**Key Features:**
+- Side-by-side employee/employer cost comparison
+- Effective employer burden percentage calculation
+- One-click email generation for client communication
+- Responsive UI with loading states and error handling
+
 ## 🚀 Tech Stack Deep Dive
 
 ### Backend: FastAPI + Async PostgreSQL
@@ -103,6 +116,7 @@ useCallback + debouncing + keyboard navigation
 - **TypeScript**: Strict typing throughout
 - **Tailwind CSS v4**: CSS-based configuration
 - **Important Dates Calendar**: Business-day aware payment schedule with ICS export
+- **Employer Cost Calculator**: AI-powered tool for calculating total employment costs across countries
 
 ### Database Schema (PostgreSQL + pgvector)
 ```sql
@@ -212,6 +226,16 @@ article_views: article_id, ip_address, user_agent, timestamp
 -- Feedback collection
 search_feedback: article_id, helpful (boolean), notes, timestamp
 ```
+
+## 🚪 Main Features & Access
+
+The Help Center provides several key features accessible through the navigation:
+
+- **Home** (`/`): Browse categories and popular articles
+- **Search** (`/search`): Full-text and semantic search across all content
+- **Calendar** (`/calendar`): Interactive payment schedule with business day calculations
+- **Cost Calculator** (`/calculators/employer-cost`): AI-powered employer cost calculations for multiple countries
+- **Articles** (`/a/[slug]`): Individual help articles with related content suggestions
 
 ### Performance Monitoring
 - API response times via FastAPI middleware

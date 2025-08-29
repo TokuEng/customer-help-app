@@ -11,7 +11,7 @@ import {
   CommandList,
   CommandSeparator 
 } from "@/components/ui/command";
-import { Search, FileText, Clock, TrendingUp, BookOpen, Coins, Heart, Shield } from "lucide-react";
+import { Search, FileText, BookOpen, Coins, Heart, Shield } from "lucide-react";
 
 export default function GlobalCommand() {
   const [open, setOpen] = useState(false);

@@ -21,7 +21,7 @@ export function getPaymentScheduleContext(): string {
     });
   };
   
-  const formatEventList = (events: ReturnType<typeof buildContractorEvents>, monthName: string) => {
+  const formatEventList = (events: ReturnType<typeof buildContractorEvents>) => {
     return events.map(event => 
       `- ${event.label}: ${formatDate(event.date)}`
     ).join('\n');
@@ -40,10 +40,10 @@ Payment Schedule Rules:
 4. Contractor Payment: Last business day of the month
 
 Important Dates for ${currentMonthName}:
-${formatEventList(currentMonthEvents, currentMonthName)}
+${formatEventList(currentMonthEvents)}
 
 Important Dates for ${nextMonthName}:
-${formatEventList(nextMonthEvents, nextMonthName)}
+${formatEventList(nextMonthEvents)}
 
 Today's Date: ${formatDate(today)}
 `;

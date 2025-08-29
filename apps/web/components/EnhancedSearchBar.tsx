@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api, type Suggestion } from '@/lib/api';
 import { cleanMarkdown } from '@/lib/text-utils';
 import { cn } from '@/lib/utils';
-import { Search, Clock, TrendingUp, Tag } from 'lucide-react';
-import Balancer from 'react-wrap-balancer';
+import { Search, Clock, TrendingUp } from 'lucide-react';
 
 interface EnhancedSearchBarProps {
   placeholder?: string;
@@ -251,7 +250,7 @@ export function EnhancedSearchBar({
           {/* No results */}
           {!isLoading && query && suggestions.length === 0 && (
             <div className="px-4 py-8 text-center text-sm text-gray-500">
-              No suggestions found for "{query}"
+              No suggestions found for &quot;{query}&quot;
             </div>
           )}
         </div>
