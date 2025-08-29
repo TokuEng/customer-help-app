@@ -28,6 +28,10 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 
+# Create cache directories and set permissions
+RUN mkdir -p .next/cache/images
+RUN chown -R nextjs:nodejs .next
+
 USER nextjs
 
 EXPOSE 3000

@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { TopLoadingBar } from "@/components/TopLoadingBar";
-
-const nunito = Nunito({ 
-  subsets: ["latin"],
-  weight: ['300', '400', '500', '600', '700', '800'],
-  variable: '--font-nunito',
-  display: 'swap',
-});
+import ChatWidget from "@/components/ChatWidget";
 
 export const metadata: Metadata = {
   title: "Toku Help Center",
@@ -33,12 +26,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={nunito.variable}>
-      <body className={`${nunito.className} min-h-screen flex flex-col`}>
+    <html lang="en">
+      <body className="min-h-screen flex flex-col">
         <TopLoadingBar />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        <ChatWidget />
       </body>
     </html>
   );

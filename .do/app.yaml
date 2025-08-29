@@ -15,10 +15,15 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL
-        value: ${APP_URL}/api
+        value: ${APP_URL}/backend/api
+      - key: BACKEND_URL
+        value: ${APP_URL}/backend
+      - key: OPENAI_API_KEY
+        type: SECRET
+        # Set this in DigitalOcean App Platform environment variables
       - key: REVALIDATE_TOKEN
         type: SECRET
-        value: MJHXGOOpaglqgS3f+4l3P6aYXfoYlE3LghMSHt9w7gw=
+        # Set this in DigitalOcean App Platform environment variables
     routes:
       - path: /
 
@@ -35,39 +40,43 @@ services:
       - key: DATABASE_URL
         value: ${customer-help-db.DATABASE_URL}
       - key: MEILI_HOST
-        value: http://147.182.245.91:7700
+        value: ${MEILI_HOST}
+        # Set this in DigitalOcean App Platform environment variables
       - key: MEILI_MASTER_KEY
         type: SECRET
-        value: NzEzYTdkNjQ0N2FiYjFkODg0NzdjNzNk
+        # Set this in DigitalOcean App Platform environment variables
       - key: NOTION_TOKEN
         type: SECRET
-        value: ntn_S31097131812gWkADDpZzrDN7Nv3wyyMLwbSbXKRQcC556
+        # Set this in DigitalOcean App Platform environment variables
       - key: NOTION_INDEX_PAGE_ID
-        value: 2030b95a751d80eaac8df6267041fb14
+        value: ${NOTION_INDEX_PAGE_ID}
+        # Set this in DigitalOcean App Platform environment variables
       - key: EMBEDDINGS_PROVIDER
         value: openai
       - key: OPENAI_API_KEY
         type: SECRET
-        value: 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
+        # Set this in DigitalOcean App Platform environment variables
       - key: REVALIDATE_TOKEN
         type: SECRET
-        value: MJHXGOOpaglqgS3f+4l3P6aYXfoYlE3LghMSHt9w7gw=
+        # Set this in DigitalOcean App Platform environment variables
       - key: WEB_BASE_URL
         value: ${APP_URL}
       - key: SPACES_KEY
         type: SECRET
-        value: DO801NJZGMF7ZX6CH8NJ
+        # Set this in DigitalOcean App Platform environment variables
       - key: SPACES_SECRET
         type: SECRET
-        value: 6JNNOAJ5DvMT1iApZCPGK4BnpHCUv7TDCteCUWtcEX0
+        # Set this in DigitalOcean App Platform environment variables
       - key: SPACES_BUCKET
-        value: customer-help-app-notion-images
+        value: ${SPACES_BUCKET}
+        # Set this in DigitalOcean App Platform environment variables
       - key: SPACES_REGION
         value: sfo3
       - key: SPACES_CDN_ENDPOINT
-        value: https://customer-help-app-notion-images.sfo3.cdn.digitaloceanspaces.com
+        value: ${SPACES_CDN_ENDPOINT}
+        # Set this in DigitalOcean App Platform environment variables
     routes:
-      - path: /api
+      - path: /backend
 
 databases:
   - cluster_name: customer-help-db

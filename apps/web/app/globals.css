@@ -40,7 +40,7 @@
     --toku-50:  #EEF4FF;
     
     /* Font */
-    --font-nunito: 'Nunito', sans-serif;
+    --font-arial: Arial, sans-serif;
 
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -110,6 +110,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-arial);
   }
 }
 

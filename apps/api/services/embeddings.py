@@ -1,7 +1,7 @@
 from typing import List
 import numpy as np
 import openai
-from apps.api.core.settings import settings
+from core.settings import settings
 import asyncio
 
 class EmbeddingsService:

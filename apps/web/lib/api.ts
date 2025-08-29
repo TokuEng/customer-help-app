@@ -2,16 +2,21 @@
 function getApiBaseUrl() {
   // Use environment variable if available (for local development)
   const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+  console.log('getApiBaseUrl debug:', { envApiUrl, isServer: typeof window === 'undefined' }); // Debug log
+  
   if (envApiUrl && envApiUrl !== '') {
+    console.log('Using env API URL:', envApiUrl); // Debug log
     return envApiUrl;
   }
   
   // For server-side rendering, we need the full internal URL
   if (typeof window === 'undefined') {
+    console.log('Using server-side API URL'); // Debug log
     return 'http://api:8080/api';  // Internal service-to-service communication
   }
   
   // For client-side, use relative URL with double prefix (DigitalOcean routing)
+  console.log('Using client-side fallback API URL'); // Debug log
   return '/api/api';  // Double prefix due to DigitalOcean routing + API prefix
 }
 
@@ -85,7 +90,11 @@ export interface PopularArticle {
 
 class APIClient {
   private async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${getApiBaseUrl()}${endpoint}`, {
+    const baseUrl = getApiBaseUrl();
+    const fullUrl = `${baseUrl}${endpoint}`;
+    console.log('API fetch:', { baseUrl, endpoint, fullUrl }); // Debug log
+    
+    const response = await fetch(fullUrl, {
       ...options,
       headers: {
         'Content-Type': 'application/json',

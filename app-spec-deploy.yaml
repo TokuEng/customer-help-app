@@ -1,4 +1,4 @@
-name: customer-help-app
+tioename: customer-help-app
 region: sfo3
 features:
   - buildpack-stack=ubuntu-22
