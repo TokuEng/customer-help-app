@@ -15,9 +15,9 @@ function getApiBaseUrl() {
     return 'http://api:8080/api';  // Internal service-to-service communication
   }
   
-  // For client-side, use relative URL with double prefix (DigitalOcean routing)
+  // For client-side, use the backend route
   console.log('Using client-side fallback API URL'); // Debug log
-  return '/api/api';  // Double prefix due to DigitalOcean routing + API prefix
+  return '/backend/api';  // Match the route in app.yaml
 }
 
 export interface SearchResult {
