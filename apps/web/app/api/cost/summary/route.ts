@@ -79,7 +79,7 @@ TASKS:
 3) Emphasize that these are estimates and actual costs may vary.`;
 
     const result = await streamText({
-      model: openai("gpt-4o-mini"),
+      model: openai('gpt-4o-mini'),
       system: SYSTEM_PROMPT,
       prompt: userPrompt,
       temperature: 0.3,
