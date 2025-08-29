@@ -79,6 +79,31 @@ export default function ChatWidget() {
                 <div className="mb-3 text-3xl">👋</div>
                 <p className="mb-2 text-sm font-medium text-gray-700">Hi! I&apos;m your Toku Help Assistant.</p>
                 <p className="text-sm text-gray-500 leading-relaxed px-2">Ask me about benefits, payroll, policies, and more!</p>
+                
+                {/* Suggested Questions */}
+                <div className="mt-4 space-y-2">
+                  <p className="text-xs text-gray-500 mb-2">Try asking:</p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {[
+                      "When is the invoice deadline?",
+                      "What are this month's payment dates?",
+                      "When do contractors get paid?",
+                      "What is the pre-funding schedule?"
+                    ].map((question, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setInput(question);
+                          setIsLoading(true);
+                          sendMessage({ text: question });
+                        }}
+                        className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-full transition-colors"
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 

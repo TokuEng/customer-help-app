@@ -32,6 +32,12 @@ export function Header() {
             >
               Search
             </Link>
+            <Link
+              href="/calendar"
+              className="text-base sm:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-3 py-2"
+            >
+              Calendar
+            </Link>
           </nav>
         </div>
       </div>

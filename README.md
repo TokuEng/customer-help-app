@@ -1,6 +1,6 @@
 # Toku Customer Help Center - AI Engineering Guide
 
-**A production-ready hybrid search knowledge base with Notion CMS integration, vector embeddings, and ISR-powered frontend.**
+**A production-ready hybrid search knowledge base with Notion CMS integration, vector embeddings, ISR-powered frontend, and contractor payment calendar.**
 
 ## 🏗️ Architecture Overview
 
@@ -25,7 +25,9 @@ graph TB
     
     subgraph "Frontend"
         WEB[Next.js 15 + ISR<br/>TypeScript + Tailwind]
+        CAL[Important Dates Calendar<br/>Business-day Logic]
         WEB --> API
+        WEB --> CAL
     end
     
     subgraph "Search & AI"
@@ -100,6 +102,7 @@ useCallback + debouncing + keyboard navigation
 - **Progressive Enhancement**: Search works without JavaScript
 - **TypeScript**: Strict typing throughout
 - **Tailwind CSS v4**: CSS-based configuration
+- **Important Dates Calendar**: Business-day aware payment schedule with ICS export
 
 ### Database Schema (PostgreSQL + pgvector)
 ```sql
@@ -163,6 +166,41 @@ SELECT *, 1 - (embedding <=> query_embedding) as similarity
 - **Category filtering**: Dynamic category suggestions  
 - **Phrase completion**: Common search patterns
 - **Debounced requests**: 300ms delay, loading states
+
+## 📅 Important Dates Calendar
+
+### Business-Day Aware Payment Scheduling
+The help center includes a contractor payment calendar that automatically calculates important dates based on business rules:
+
+```typescript
+// Business Rules Implementation
+- Invoice Due: 20th of month (→ previous business day if weekend)
+- Pre-funding Sent: 2 business days after invoice approval
+- Pre-funding Due: 3 calendar days before payment (→ previous business day if weekend)  
+- Contractor Payment: Last business day of month
+```
+
+**Key Features:**
+- **Business Day Logic**: Automatically shifts weekend dates to previous business day
+- **Visual Timeline**: Color-coded events (red: invoice, blue: pre-funding sent, orange: pre-funding due, green: payment)
+- **ICS Export**: One-click calendar download for monthly schedules
+- **Responsive Design**: Mobile-optimized calendar grid with Toku branding
+
+**Technical Implementation:**
+```typescript
+// libs/business-days.ts - Core date calculations
+export const addBusinessDays = (date: Date, days: number) => {
+  // Skips weekends when adding days
+}
+
+// libs/contractor-dates.ts - Event generation
+export function buildContractorEvents(year: number, month: number) {
+  // Generates all payment events for a given month
+}
+
+// components/ImportantDatesCalendar.tsx - UI Component
+// Renders interactive calendar with month navigation
+```
 
 ## 📊 Analytics & Feedback
 
@@ -345,5 +383,10 @@ async def health_check():
 4. **Search Analytics**: ML-powered query understanding
 5. **Content Generation**: Automated summary improvements
 6. **Multi-language**: Embeddings for internationalization
+7. **Calendar Enhancements**: 
+   - Holiday awareness for different countries
+   - Admin overrides for specific dates
+   - Payment instruction CTAs on due dates
+   - Multi-timezone support for global teams
 
 **Built for production scale, optimized for AI workflows, designed for extensibility.**

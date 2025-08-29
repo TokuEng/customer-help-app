@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { TopLoadingBar } from "@/components/TopLoadingBar";
 import ChatWidget from "@/components/ChatWidget";
+import GlobalCommand from "@/components/GlobalCommand";
 
 export const metadata: Metadata = {
   title: "Toku Help Center",
@@ -33,6 +34,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <ChatWidget />
+        <GlobalCommand />
       </body>
     </html>
   );

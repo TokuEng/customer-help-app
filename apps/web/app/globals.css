@@ -173,3 +173,46 @@
     border-radius: 0.5rem;
   }
 }
+
+/* Micro-interactions and animations */
+@layer utilities {
+  /* Smooth hover transitions */
+  .transition-base {
+    @apply transition-all duration-150 ease-out;
+  }
+  
+  /* Hover lift effect */
+  .hover-lift {
+    @apply transition-transform duration-150 hover:-translate-y-0.5;
+  }
+  
+  /* Focus states */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-[#1c46ce] focus:ring-offset-2;
+  }
+  
+  /* Card hover effects */
+  .card-hover {
+    @apply hover:shadow-lg hover:border-gray-300 transition-all duration-150;
+  }
+  
+  /* Smooth fade animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  /* Subtle pulse for loading states */
+  @keyframes subtlePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+  
+  .animate-subtle-pulse {
+    animation: subtlePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}

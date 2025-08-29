@@ -1,6 +1,7 @@
 import { streamText, convertToModelMessages, UIMessage } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { NextRequest } from 'next/server';
+import { getPaymentScheduleContext } from '@/lib/payment-schedule-helper';
 
 const BACKEND_URL = process.env.BACKEND_URL!; // e.g., http://localhost:8080 or https://api.yourdomain.com
 
@@ -53,8 +54,11 @@ export async function POST(req: NextRequest) {
       })
       .join('\n---\n');
 
+    // Get payment schedule context
+    const paymentScheduleInfo = getPaymentScheduleContext();
+
     // System prompt for Toku-specific context
-    const systemPrompt = `You are Toku's Help Center assistant. You help users with questions about Toku's benefits, payroll, policies, and workplace tools.
+    const systemPrompt = `You are Toku's Help Center assistant. You help users with questions about Toku's benefits, payroll, policies, workplace tools, and contractor payment schedules.
 
 IMPORTANT GUIDELINES:
 - Always try to be as helpful as possible with the available context
@@ -65,7 +69,12 @@ IMPORTANT GUIDELINES:
 - Keep answers professional and friendly
 - Focus specifically on Toku-related information
 - When creating links, use ONLY relative URLs like /a/article-slug (example: [View Full Guide](/a/toku-how-to-view-payslips))
-- NEVER add domains like toku.com or any other base URL`;
+- NEVER add domains like toku.com or any other base URL
+- For payment date questions, use the payment schedule information provided
+- When discussing payment dates, mention that dates automatically adjust for weekends
+- You can direct users to the [Payment Calendar](/calendar) for a visual view of all dates
+
+${paymentScheduleInfo}`;
 
     const contextPrompt = contexts.length > 0 
       ? `\n\nContext from Toku Help Center:\n${ctxText}\n\nPlease answer the user's question using the above context. Look for any relevant or related information that might be helpful, even if it's not a perfect match. Always include citations [1], [2], etc. When relevant, include clickable links to articles using markdown format like [Article Title](URL) - IMPORTANT: Use only the relative URLs provided (like /a/article-slug), do NOT add any domain like toku.com or other domains. If the context doesn't directly answer their question but contains related information, mention that and provide the related details.`
