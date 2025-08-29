@@ -86,7 +86,7 @@ jobs:
       - name: Monitor deployment (with timeout)
         run: |
           echo "Monitoring deployment..."
-          TIMEOUT=600  # 10 minutes
+          TIMEOUT=120
           ELAPSED=0
           INTERVAL=10  # Check every 10 seconds instead of 20
           
