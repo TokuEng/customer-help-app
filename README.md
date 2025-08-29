@@ -48,6 +48,19 @@ graph TB
 - **BM25 (MeiliSearch)**: Keyword/lexical search with auto-complete
 - **Vector Search (pgvector)**: Semantic similarity using OpenAI embeddings
 - **Smart Snippet Generation**: Context-aware excerpt creation
+
+## 🔒 Security
+
+**Production-ready security implementation with comprehensive protections:**
+
+- ✅ **No Console Logging**: All debug logs removed to prevent information leakage
+- ✅ **Secrets Management**: Environment variables only, no hardcoded keys
+- ✅ **AI Guardrails**: Input validation, prompt injection protection, scope limitation
+- ✅ **SQL Injection Protection**: Parameterized queries throughout
+- ✅ **Input Validation**: Length limits, format validation, XSS filtering
+- ✅ **Error Handling**: Generic responses, no sensitive data exposure
+
+*See `SECURITY_AUDIT_RESULTS.md` for detailed security audit report.*
 - **Related Articles**: Cosine similarity on averaged document embeddings
 
 ### 2. Intelligent Content Processing

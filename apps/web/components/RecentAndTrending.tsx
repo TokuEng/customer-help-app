@@ -24,7 +24,7 @@ export default function RecentAndTrending() {
       try {
         setRecentArticles(JSON.parse(stored).slice(0, 5));
       } catch (e) {
-        console.error("Failed to parse recent articles", e);
+        // Failed to parse recent articles from localStorage
       }
     }
   }, []);
@@ -36,7 +36,7 @@ export default function RecentAndTrending() {
         const articles = await api.getPopularArticles(5);
         setPopularArticles(articles);
       } catch (error) {
-        console.error("Failed to fetch popular articles:", error);
+        // Failed to fetch popular articles
       }
     }
     fetchPopular();

@@ -59,7 +59,7 @@ async function SearchResults({ searchParams }: SearchPageProps) {
       </div>
     );
   } catch (error) {
-    console.error('Search error:', error);
+    // Search error occurred
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>

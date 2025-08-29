@@ -19,7 +19,7 @@ export function PopularArticles() {
         const articles = await api.getPopularArticles(5);
         setPopularArticles(articles);
       } catch (error) {
-        console.error('Failed to fetch popular articles:', error);
+        // Failed to fetch popular articles
         setError('Unable to load popular articles. Please try again later.');
       } finally {
         setLoading(false);

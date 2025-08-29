@@ -51,7 +51,7 @@ export default function EmployerCostPage() {
       setEmailText(text);
       setDialogOpen(true);
     } catch (error) {
-      console.error("Failed to generate email:", error);
+      // Failed to generate email summary
       setEmailText("Failed to generate email. Please try again.");
       setDialogOpen(true);
     } finally {

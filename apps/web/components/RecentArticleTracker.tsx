@@ -31,7 +31,7 @@ export function RecentArticleTracker({ title, slug }: RecentArticleTrackerProps)
       
       localStorage.setItem(recentKey, JSON.stringify(recent));
     } catch (e) {
-      console.error('Failed to save recent article', e);
+      // Failed to save recent article to localStorage
     }
   }, [title, slug]);
   

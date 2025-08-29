@@ -22,7 +22,18 @@ export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
-    const { country, rule, out } = await req.json();
+    const body = await req.json();
+    const { country, rule, out } = body;
+
+    // Input validation
+    if (!country || !rule || !out || typeof country !== 'string') {
+      return new Response('Invalid input parameters', { status: 400 });
+    }
+
+    // Validate country code format
+    if (!/^[A-Z]{2,3}$/.test(country)) {
+      return new Response('Invalid country code format', { status: 400 });
+    }
 
     // Create a structured prompt with the calculated data
     const userPrompt = `
@@ -76,7 +87,7 @@ TASKS:
 
     return result.toTextStreamResponse();
   } catch (error) {
-    console.error('Cost summary API error:', error);
+    // Internal error occurred
     return new Response('Failed to generate summary', { status: 500 });
   }
 }

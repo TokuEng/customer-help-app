@@ -20,10 +20,8 @@ services:
         value: ${APP_URL}/backend
       - key: OPENAI_API_KEY
         type: SECRET
-        # Set this in DigitalOcean App Platform environment variables
       - key: REVALIDATE_TOKEN
         type: SECRET
-        # Set this in DigitalOcean App Platform environment variables
     routes:
       - path: /
 
@@ -40,41 +38,31 @@ services:
       - key: DATABASE_URL
         value: ${customer-help-db.DATABASE_URL}
       - key: MEILI_HOST
-        value: ${MEILI_HOST}
-        # Set this in DigitalOcean App Platform environment variables
+        type: SECRET
       - key: MEILI_MASTER_KEY
         type: SECRET
-        # Set this in DigitalOcean App Platform environment variables
       - key: NOTION_TOKEN
         type: SECRET
-        # Set this in DigitalOcean App Platform environment variables
       - key: NOTION_INDEX_PAGE_ID
-        value: ${NOTION_INDEX_PAGE_ID}
-        # Set this in DigitalOcean App Platform environment variables
+        type: SECRET
       - key: EMBEDDINGS_PROVIDER
         value: openai
       - key: OPENAI_API_KEY
         type: SECRET
-        # Set this in DigitalOcean App Platform environment variables
       - key: REVALIDATE_TOKEN
         type: SECRET
-        # Set this in DigitalOcean App Platform environment variables
       - key: WEB_BASE_URL
         value: ${APP_URL}
       - key: SPACES_KEY
         type: SECRET
-        # Set this in DigitalOcean App Platform environment variables
       - key: SPACES_SECRET
         type: SECRET
-        # Set this in DigitalOcean App Platform environment variables
       - key: SPACES_BUCKET
-        value: ${SPACES_BUCKET}
-        # Set this in DigitalOcean App Platform environment variables
+        type: SECRET
       - key: SPACES_REGION
         value: sfo3
       - key: SPACES_CDN_ENDPOINT
-        value: ${SPACES_CDN_ENDPOINT}
-        # Set this in DigitalOcean App Platform environment variables
+        type: SECRET
     routes:
       - path: /backend
 

@@ -50,7 +50,7 @@ export function SearchBar({
       setShowSuggestions(true);
       setSelectedIndex(-1);
     } catch (error) {
-      console.error('Failed to fetch suggestions:', error);
+      // Failed to fetch suggestions
       setSuggestions([]);
     } finally {
       setIsLoading(false);

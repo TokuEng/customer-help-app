@@ -3,10 +3,10 @@
 
 import { getPaymentScheduleContext, getUpcomingPaymentDates } from '../apps/web/lib/payment-schedule-helper.js';
 
-console.log('=== Payment Schedule Context ===');
-console.log(getPaymentScheduleContext());
+// Payment Schedule Context
+getPaymentScheduleContext();
 
-console.log('\n=== Upcoming Payment Dates ===');
+// Upcoming Payment Dates
 const upcoming = getUpcomingPaymentDates();
 upcoming.forEach(event => {
   const dateStr = event.date.toLocaleDateString('en-US', { 
@@ -17,5 +17,5 @@ upcoming.forEach(event => {
   const status = event.daysFromNow === 0 ? ' (TODAY)' : 
                  event.daysFromNow === 1 ? ' (TOMORROW)' : 
                  ` (in ${event.daysFromNow} days)`;
-  console.log(`- ${event.label}: ${dateStr}${status}`);
+  // ${event.label}: ${dateStr}${status}
 });

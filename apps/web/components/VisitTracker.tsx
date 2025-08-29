@@ -15,7 +15,7 @@ export function VisitTracker({ articleId }: VisitTrackerProps) {
         await api.trackArticleView(articleId);
       } catch (error) {
         // Silently fail - don't disrupt user experience for analytics
-        console.warn('Failed to track article view:', error);
+        // Failed to track article view
       }
     };
 

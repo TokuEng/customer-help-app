@@ -22,7 +22,7 @@ export function Feedback({ articleId }: FeedbackProps) {
       await api.submitFeedback(articleId, helpful);
       setSubmitted(true);
     } catch (error) {
-      console.error('Failed to submit feedback:', error);
+      // Failed to submit feedback
     } finally {
       setIsSubmitting(false);
     }

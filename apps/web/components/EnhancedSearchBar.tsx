@@ -34,7 +34,7 @@ export function EnhancedSearchBar({
       try {
         setRecentSearches(JSON.parse(stored).slice(0, 3));
       } catch (e) {
-        console.error('Failed to parse recent searches', e);
+        // Failed to parse recent searches from localStorage
       }
     }
   }, []);
@@ -59,7 +59,7 @@ export function EnhancedSearchBar({
       setSuggestions(results);
       setSelectedIndex(-1);
     } catch (error) {
-      console.error('Failed to fetch suggestions:', error);
+      // Failed to fetch suggestions
       setSuggestions([]);
     } finally {
       setIsLoading(false);
