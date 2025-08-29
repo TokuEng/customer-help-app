@@ -1,8 +1,13 @@
 from typing import List
 import numpy as np
 import openai
-from core.settings import settings
 import asyncio
+
+# Try both import paths to work in different contexts
+try:
+    from core.settings import settings  # When running from apps/api directory
+except ImportError:
+    from apps.api.core.settings import settings  # When running from project root
 
 class EmbeddingsService:
     def __init__(self):

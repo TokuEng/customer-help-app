@@ -2,10 +2,15 @@ from notion_client import AsyncClient
 from typing import List, Dict, Optional, Tuple
 import markdown
 from bs4 import BeautifulSoup
-from apps.api.core.settings import settings
 import re
 from datetime import datetime
 from .image_storage import ImageStorageService
+
+# Try both import paths to work in different contexts
+try:
+    from core.settings import settings  # When running from apps/api directory
+except ImportError:
+    from apps.api.core.settings import settings  # When running from project root
 
 class NotionService:
     def __init__(self):
@@ -15,7 +20,7 @@ class NotionService:
         if all([settings.spaces_key, settings.spaces_secret, settings.spaces_bucket]):
             try:
                 self.image_storage = ImageStorageService()
-                print("✅ ImageStorageService initialized successfully")
+                # print("✅ ImageStorageService initialized successfully")
             except Exception as e:
                 print(f"❌ Failed to initialize ImageStorageService: {e}")
                 self.image_storage = None
@@ -68,13 +73,14 @@ class NotionService:
                         current_heading = 'Token Payroll'
                     elif 'benefit' in heading_lower:  # More flexible - catches "Benefits", "Benefit", etc.
                         current_heading = 'Benefits'
-                        print(f"✅ Benefits section detected!")
+                        # print(f"✅ Benefits section detected!")
                     elif 'polic' in heading_lower:  # Catches "Policy", "Policies"
                         current_heading = 'Policy'
                     else:
                         # Use the heading text as-is if it doesn't match predefined categories
                         current_heading = heading_text
                     print(f"📂 Category set to: {current_heading}")
+            # sections found
             
             # Extract page links
             elif block_type == 'child_page':
@@ -121,7 +127,86 @@ class NotionService:
             if category == 'Benefits':
                 print(f"   ✅ Benefits pages will be processed!")
         
+        # Get nested pages for ALL pages (not just Benefits)
+        print("\n🔍 Checking for nested pages in all sections...")
+        all_page_ids = {p['page_id'] for p in pages}  # Track to avoid duplicates
+        nested_pages_to_add = []
+        
+        for page in pages:
+            print(f"\n📂 Exploring nested pages in: {page['page_id']} (Category: {page['category']})")
+            try:
+                # Get child pages from this page
+                nested_pages = await self._get_nested_pages(page['page_id'], page['category'], all_page_ids)
+                nested_pages_to_add.extend(nested_pages)
+                print(f"   ✅ Found {len(nested_pages)} new nested pages")
+            except Exception as e:
+                print(f"   ⚠️  Error getting nested pages: {e}")
+        
+        pages.extend(nested_pages_to_add)
+        print(f"\n📊 Total pages to process: {len(pages)} (including {len(nested_pages_to_add)} nested pages)")
+        
         return pages
+    
+    async def _get_nested_pages(self, parent_page_id: str, category: str, seen_ids: set = None) -> List[Dict[str, str]]:
+        """Recursively get all nested child pages from a parent page"""
+        if seen_ids is None:
+            seen_ids = set()
+            
+        nested_pages = []
+        
+        try:
+            # Get all blocks from this page
+            blocks = await self.fetch_index_blocks(parent_page_id)
+            
+            for block in blocks:
+                if block['type'] == 'child_page':
+                    page_id = block['id']
+                    
+                    # Skip if we've already seen this page
+                    if page_id in seen_ids:
+                        continue
+                        
+                    seen_ids.add(page_id)
+                    
+                    # Add this page
+                    nested_pages.append({
+                        'page_id': page_id,
+                        'category': category
+                    })
+                    
+                    # Get the title for logging
+                    title = block.get('child_page', {}).get('title', 'Untitled')
+                    print(f"      📄 Found nested page: {title}")
+                    
+                # Also check for link_to_page blocks
+                elif block['type'] == 'link_to_page':
+                    page_id = block['link_to_page'].get('page_id')
+                    if page_id and page_id not in seen_ids:
+                        seen_ids.add(page_id)
+                        nested_pages.append({
+                            'page_id': page_id,
+                            'category': category
+                        })
+                        print(f"      🔗 Found linked page")
+                        
+                # Check for page mentions in rich text
+                elif block['type'] in ['paragraph', 'bulleted_list_item', 'numbered_list_item']:
+                    rich_text = block.get(block['type'], {}).get('rich_text', [])
+                    for text_obj in rich_text:
+                        if text_obj.get('type') == 'mention' and text_obj['mention'].get('type') == 'page':
+                            page_id = text_obj['mention']['page']['id']
+                            if page_id not in seen_ids:
+                                seen_ids.add(page_id)
+                                nested_pages.append({
+                                    'page_id': page_id,
+                                    'category': category
+                                })
+                                print(f"      📎 Found page mention: {text_obj.get('plain_text', 'Link')}")
+                
+        except Exception as e:
+            print(f"      ❌ Error fetching nested pages: {e}")
+        
+        return nested_pages
     
     async def fetch_page_detail(self, page_id: str) -> Dict:
         """Fetch page metadata and content with immediate image processing"""
@@ -242,7 +327,7 @@ class NotionService:
         Returns (url, expiry_time) or (None, None) if failed
         """
         try:
-            print(f"🔄 Getting fresh URL for block {block_id}...")
+            # Getting fresh URL for block
             # Fetch the specific block to get fresh file URL
             block = await self.client.blocks.retrieve(block_id=block_id)
             
@@ -256,17 +341,17 @@ class NotionService:
                     expiry_time = file_info.get('expiry_time')
                     
                     if url and expiry_time:
-                        print(f"✅ Fresh URL expires: {expiry_time}")
+                        # print(f"✅ Fresh URL expires: {expiry_time}")
                         return url, expiry_time
                     elif url:
-                        print(f"✅ Fresh URL (no expiry field)")
+                        # print(f"✅ Fresh URL (no expiry field)")
                         return url, None
                 
                 # External URLs don't expire
                 elif 'external' in image_block:
                     url = image_block['external'].get('url')
                     if url:
-                        print(f"🔗 External URL (no expiry): {url[:50]}...")
+                        # print(f"🔗 External URL (no expiry): {url[:50]}...")
                         return url, None
                         
         except Exception as e:
@@ -400,7 +485,8 @@ class NotionService:
                                 url = permanent_url
                                 alt_text = caption or "Image"
                                 lines.append(f"{indent}![{alt_text}]({url})\n")
-                                print(f"✅ Stored image permanently: {permanent_url}")
+                                # Show only the Spaces URL, not the long Notion URL
+                                # print(f"✅ Stored image permanently: {permanent_url}")
                             else:
                                 # Storage failed, use fresh URL with expiry info
                                 alt_text = caption or "Screenshot or diagram"
@@ -429,11 +515,34 @@ class NotionService:
                 else:
                     print(f"❌ Could not get fresh URL for image block {block_id}")
             
+            elif block_type == 'child_page':
+                # Handle child page blocks (like in Benefits page)
+                title = block.get('child_page', {}).get('title', 'Untitled Page')
+                page_id = block['id']
+                
+                # Convert to a help center slug (simplified for now)
+                # In production, you'd want to look up the actual slug from the database
+                potential_slug = self._title_to_slug(title)
+                
+                # Create a link to the nested page
+                lines.append(f"{indent}- [{title}](/a/{potential_slug})")
+            
             else:
                 # Log unsupported block types for debugging
                 print(f"⚠️  Unsupported block type: {block_type}")
         
         return '\n'.join(lines)
+    
+    def _title_to_slug(self, title: str) -> str:
+        """Convert a title to a URL-friendly slug"""
+        # Remove special characters and convert to lowercase
+        slug = re.sub(r'[^\w\s-]', '', title.lower())
+        # Replace spaces with hyphens
+        slug = re.sub(r'[\s_]+', '-', slug)
+        # Remove leading/trailing hyphens
+        slug = slug.strip('-')
+        # Prefix with 'toku-' for consistency
+        return f"toku-{slug}" if slug else "untitled"
     
     async def _fetch_block_children(self, block_id: str) -> List[Dict]:
         """Fetch immediate children of a block"""
@@ -471,9 +580,23 @@ class NotionService:
             if annotations.get('strikethrough'):
                 text = f"~~{text}~~"
             
-            # Handle links
-            if text_obj.get('href'):
-                text = f"[{text}]({text_obj['href']})"
+            # Handle different types of links
+            if text_obj.get('type') == 'mention' and text_obj['mention'].get('type') == 'page':
+                # This is a link to another Notion page
+                page_id = text_obj['mention']['page']['id']
+                # Convert to help center slug
+                slug = self._title_to_slug(text)
+                text = f"[{text}](/a/{slug})"
+            elif text_obj.get('href'):
+                # Regular external link
+                href = text_obj['href']
+                # Check if it's a Notion page link
+                if '/notion.so/' in href or href.startswith('/'):
+                    # Convert Notion links to help center links
+                    slug = self._title_to_slug(text)
+                    text = f"[{text}](/a/{slug})"
+                else:
+                    text = f"[{text}]({href})"
             
             result.append(text)
         

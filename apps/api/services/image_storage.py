@@ -5,7 +5,12 @@ import httpx
 import boto3
 from typing import Optional
 from urllib.parse import urlparse
-from apps.api.core.settings import settings
+
+# Try both import paths to work in different contexts
+try:
+    from core.settings import settings  # When running from apps/api directory
+except ImportError:
+    from apps.api.core.settings import settings  # When running from project root
 
 class ImageStorageService:
     """Service to download Notion images and store them permanently in DigitalOcean Spaces"""
@@ -74,19 +79,16 @@ class ImageStorageService:
                 return self._get_cdn_url(image_key)
             except Exception as e:
                 # Image doesn't exist (or any other error), need to download and upload
-                print(f"🔍 Image not cached (expected): {str(e)[:100]}...")
+                # Image not cached (expected behavior)
                 pass
             
             # Try to download image with fresh URL debugging
             max_retries = 2
-            print(f"🔍 Analyzing fresh URL...")
-            print(f"   Length: {len(notion_url)} characters")
-            print(f"   Domain: {urlparse(notion_url).netloc}")
-            print(f"   Path starts: {urlparse(notion_url).path[:50]}...")
+            # Analyzing fresh URL (details omitted for cleaner output)
             
             for attempt in range(max_retries + 1):
                 try:
-                    print(f"⬇️  Downloading image (attempt {attempt + 1}/{max_retries + 1}): {notion_url[:50]}...")
+                    # print(f"⬇️  Downloading image (attempt {attempt + 1}/{max_retries + 1}): {notion_url[:50]}...")
                     
                     async with httpx.AsyncClient(timeout=30.0) as client:
                         response = await client.get(notion_url)
@@ -94,7 +96,7 @@ class ImageStorageService:
                         image_data = response.content
                         
                     # If we get here, download was successful
-                    print(f"✅ Download successful! Got {len(image_data)} bytes")
+                    # print(f"✅ Download successful! Got {len(image_data)} bytes")
                     break
                     
                 except httpx.HTTPStatusError as e:
@@ -131,11 +133,14 @@ class ImageStorageService:
             
             # Return CDN URL
             cdn_url = self._get_cdn_url(image_key)
-            print(f"✅ Stored image: {notion_url} -> {cdn_url}")
+            # Truncate long URLs for cleaner output
+            truncated_url = notion_url[:50] + '...' if len(notion_url) > 50 else notion_url
+            # print(f"✅ Stored image: {truncated_url} -> {cdn_url}")
             return cdn_url
             
         except Exception as e:
-            print(f"❌ Failed to store image {notion_url}: {str(e)}")
+            truncated_url = notion_url[:50] + '...' if len(notion_url) > 50 else notion_url
+            print(f"❌ Failed to store image {truncated_url}: {str(e)}")
             return None  # Return None to indicate failure
     
     def _is_notion_hosted_image(self, url: str) -> bool:

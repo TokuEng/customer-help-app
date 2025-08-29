@@ -4,9 +4,15 @@ from typing import List, Dict, Tuple
 import uuid
 import re
 from datetime import datetime
-from apps.api.services.chunking import ChunkingService
-from apps.api.services.embeddings import EmbeddingsService
 import numpy as np
+
+# Try both import paths to work in different contexts
+try:
+    from services.chunking import ChunkingService  # When running from apps/api directory
+    from services.embeddings import EmbeddingsService
+except ImportError:
+    from apps.api.services.chunking import ChunkingService  # When running from project root
+    from apps.api.services.embeddings import EmbeddingsService
 
 class IndexerService:
     def __init__(self):
