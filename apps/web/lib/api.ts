@@ -15,9 +15,9 @@ function getApiBaseUrl() {
     return 'http://api:8080/api';  // Internal service-to-service communication
   }
   
-  // For client-side, use the backend route
+  // For client-side, use relative URL with double prefix (DigitalOcean routing)
   console.log('Using client-side fallback API URL'); // Debug log
-  return '/backend/api';  // Match the route in app.yaml
+  return '/api/api';  // Double prefix due to DigitalOcean routing + API prefix
 }
 
 export interface SearchResult {
@@ -90,7 +90,15 @@ export interface PopularArticle {
 
 class APIClient {
   private async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const baseUrl = getApiBaseUrl();
+    let baseUrl = getApiBaseUrl();
+    
+    // Special handling for popular-articles endpoint
+    if (endpoint.includes('popular-articles') && typeof window !== 'undefined') {
+      // Popular articles uses single /api prefix
+      baseUrl = '/api';
+      console.log('Using special route for popular-articles'); // Debug log
+    }
+    
     const fullUrl = `${baseUrl}${endpoint}`;
     console.log('API fetch:', { baseUrl, endpoint, fullUrl }); // Debug log
     
