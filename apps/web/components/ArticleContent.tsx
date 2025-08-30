@@ -12,17 +12,49 @@ export function ArticleContent({ content, className = '' }: ArticleContentProps)
 
   useEffect(() => {
     if (contentRef.current) {
-      // Add IDs to headings for TOC navigation using same logic as backend
-      const headings = contentRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6');
+      const container = contentRef.current;
+
+      const isInCode = (el: Element) => !!el.closest('pre, code');
+
+      const candidates = container.querySelectorAll('p, li, a, h1, h2, h3, h4, h5, h6');
+      candidates.forEach((el) => {
+        if (isInCode(el)) return;
+
+        if (el.childNodes.length === 1 && el.childNodes[0].nodeType === Node.TEXT_NODE) {
+          const txt = el.textContent || '';
+          const m = txt.match(/^\s*(#{2,6})\s+(.*)$/);
+          if (m) {
+            const level = m[1].length;
+            const rest = m[2];
+
+            if (el.tagName.toLowerCase() === 'p' && level >= 2 && level <= 6) {
+              const h = document.createElement(`h${Math.min(level, 6)}`);
+              h.textContent = rest;
+              el.replaceWith(h);
+              return;
+            }
+
+            el.textContent = rest;
+          }
+        } else {
+          const first = el.firstChild;
+          if (first && first.nodeType === Node.TEXT_NODE) {
+            const t = first.textContent || '';
+            const tm = t.match(/^\s*(#{2,6})\s+(.*)$/);
+            if (tm) first.textContent = tm[2];
+          }
+        }
+      });
+
+      const headings = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
       headings.forEach((heading) => {
         if (!heading.id) {
-          // Generate ID from heading text using same logic as ChunkingService
           const text = heading.textContent || '';
           const idText = text
             .toLowerCase()
-            .replace(/[^\w\s-]/g, '') // Remove special characters
-            .replace(/[-\s]+/g, '-') // Replace spaces and multiple hyphens with single hyphen
-            .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+            .replace(/[^\w\s-]/g, '')
+            .replace(/[-\s]+/g, '-')
+            .replace(/^-+|-+$/g, '');
           
           if (idText) {
             heading.id = `h-${idText}`;
@@ -30,8 +62,7 @@ export function ArticleContent({ content, className = '' }: ArticleContentProps)
         }
       });
 
-      // Enhance images with better styling and handle broken images
-      const images = contentRef.current.querySelectorAll('img');
+      const images = container.querySelectorAll('img');
       images.forEach((img) => {
         img.style.maxWidth = '100%';
         img.style.height = 'auto';
@@ -40,9 +71,7 @@ export function ArticleContent({ content, className = '' }: ArticleContentProps)
         img.style.margin = '2rem auto';
         img.style.display = 'block';
         
-        // Handle broken images
         img.onerror = function() {
-          // Create a placeholder div
           const placeholder = document.createElement('div');
           placeholder.className = 'image-placeholder';
           placeholder.style.cssText = `
@@ -68,7 +97,6 @@ export function ArticleContent({ content, className = '' }: ArticleContentProps)
             </div>
           `;
           
-          // Replace the broken image with the placeholder
           if (img.parentNode) {
             img.parentNode.replaceChild(placeholder, img);
           }

@@ -43,12 +43,12 @@
 
 .article-content ul,
 .article-content ol {
-  margin-bottom: 1.25rem;
-  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+  padding-left: 1.25rem;
 }
 
 .article-content li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 .article-content img {
@@ -134,6 +134,15 @@
   color: var(--toku-700);
   text-decoration: underline;
 }
+.article-content li > a {
+  text-decoration: none;
+  border-bottom: 1px solid rgba(31, 90, 224, 0.25);
+  padding-bottom: 1px;
+}
+.article-content li > a:hover {
+  border-bottom-color: rgba(31, 90, 224, 0.5);
+}
+
 
 .article-content hr {
   border: none;
