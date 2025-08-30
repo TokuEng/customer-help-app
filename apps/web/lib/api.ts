@@ -84,6 +84,11 @@ export interface PopularArticle {
   view_count: number;
 }
 
+export interface CategoryCount {
+  category: string;
+  count: number;
+}
+
 class APIClient {
   private async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const baseUrl = getApiBaseUrl();
@@ -146,6 +151,10 @@ class APIClient {
 
   async getPopularArticles(limit: number = 5): Promise<PopularArticle[]> {
     return this.fetch<PopularArticle[]>(`/popular-articles?limit=${limit}`);
+  }
+
+  async getCategoryCounts(): Promise<CategoryCount[]> {
+    return this.fetch<CategoryCount[]>('/category-counts');
   }
 }
 
