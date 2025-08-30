@@ -17,6 +17,10 @@ class PopularArticle(BaseModel):
     reading_time_min: int
     view_count: int
 
+class CategoryCount(BaseModel):
+    category: str
+    count: int
+
 @router.post("/track-view")
 async def track_article_view(request: Request, body: TrackViewRequest):
     """Track an article view for analytics"""
@@ -82,6 +86,38 @@ async def get_popular_articles(request: Request, limit: int = 5):
                     view_count=row['view_count']
                 )
                 for row in popular_articles
+            ]
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/category-counts", response_model=List[CategoryCount])
+async def get_category_counts(request: Request):
+    """Get article counts by category"""
+    try:
+        # Get database pool
+        db_pool = request.app.state.db_pool()
+        
+        async with db_pool.acquire() as conn:
+            # Get article counts by category
+            category_counts = await conn.fetch(
+                """
+                SELECT 
+                    category,
+                    COUNT(*) as count
+                FROM articles
+                WHERE visibility = 'public' AND category IS NOT NULL
+                GROUP BY category
+                ORDER BY category
+                """
+            )
+            
+            return [
+                CategoryCount(
+                    category=row['category'],
+                    count=row['count']
+                )
+                for row in category_counts
             ]
     
     except Exception as e:

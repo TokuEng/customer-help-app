@@ -3,8 +3,27 @@ import Categories, { categoryData } from '@/components/Categories';
 import { PopularArticles } from '@/components/PopularArticles';
 import RecentAndTrending from '@/components/RecentAndTrending';
 import SupportBar from '@/components/SupportBar';
+import { api } from '@/lib/api';
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Fetch real category counts
+  let categoriesWithCounts = categoryData;
+  try {
+    const counts = await api.getCategoryCounts();
+    
+    // Update category data with real counts
+    categoriesWithCounts = categoryData.map(category => {
+      const realCount = counts.find(c => c.category === category.name);
+      return {
+        ...category,
+        count: realCount?.count || 0
+      };
+    });
+  } catch {
+    // Fall back to default data if API fails
+    categoriesWithCounts = categoryData;
+  }
+
   return (
     <div className="min-h-screen">
       {/* Brand gradient bar */}
@@ -14,7 +33,7 @@ export default function HomePage() {
       <Hero />
 
       {/* Denser Categories */}
-      <Categories items={categoryData} />
+      <Categories items={categoriesWithCounts} />
 
       {/* Popular Articles */}
       <PopularArticles />
