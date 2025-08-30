@@ -23,7 +23,7 @@ export default function RecentAndTrending() {
     if (stored) {
       try {
         setRecentArticles(JSON.parse(stored).slice(0, 5));
-      } catch (e) {
+      } catch {
         // Failed to parse recent articles from localStorage
       }
     }
@@ -35,7 +35,7 @@ export default function RecentAndTrending() {
       try {
         const articles = await api.getPopularArticles(5);
         setPopularArticles(articles);
-      } catch (error) {
+      } catch {
         // Failed to fetch popular articles
       }
     }

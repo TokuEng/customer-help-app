@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       slug,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch {
     // Revalidation error occurred
     return NextResponse.json(
       { error: 'Error revalidating' },

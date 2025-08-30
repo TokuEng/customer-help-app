@@ -21,7 +21,7 @@ export function Feedback({ articleId }: FeedbackProps) {
     try {
       await api.submitFeedback(articleId, helpful);
       setSubmitted(true);
-    } catch (error) {
+    } catch {
       // Failed to submit feedback
     } finally {
       setIsSubmitting(false);

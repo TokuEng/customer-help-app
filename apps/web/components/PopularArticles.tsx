@@ -18,7 +18,7 @@ export function PopularArticles() {
       try {
         const articles = await api.getPopularArticles(5);
         setPopularArticles(articles);
-      } catch (error) {
+      } catch {
         // Failed to fetch popular articles
         setError('Unable to load popular articles. Please try again later.');
       } finally {

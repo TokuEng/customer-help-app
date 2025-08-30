@@ -50,7 +50,7 @@ export default function EmployerCostPage() {
       const text = await res.text();
       setEmailText(text);
       setDialogOpen(true);
-    } catch (error) {
+    } catch {
       // Failed to generate email summary
       setEmailText("Failed to generate email. Please try again.");
       setDialogOpen(true);

@@ -86,7 +86,7 @@ TASKS:
     });
 
     return result.toTextStreamResponse();
-  } catch (error) {
+  } catch {
     // Internal error occurred
     return new Response('Failed to generate summary', { status: 500 });
   }
