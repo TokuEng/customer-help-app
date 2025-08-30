@@ -33,7 +33,7 @@ export function EnhancedSearchBar({
     if (stored) {
       try {
         setRecentSearches(JSON.parse(stored).slice(0, 3));
-      } catch (e) {
+      } catch {
         // Failed to parse recent searches from localStorage
       }
     }
@@ -58,7 +58,7 @@ export function EnhancedSearchBar({
       const results = await api.getSuggestions({ q: searchQuery, limit: 5 });
       setSuggestions(results);
       setSelectedIndex(-1);
-    } catch (error) {
+    } catch {
       // Failed to fetch suggestions
       setSuggestions([]);
     } finally {

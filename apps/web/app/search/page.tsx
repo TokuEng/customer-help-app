@@ -58,7 +58,7 @@ async function SearchResults({ searchParams }: SearchPageProps) {
         </div>
       </div>
     );
-  } catch (error) {
+  } catch {
     // Search error occurred
     return (
       <div className="text-center py-12">

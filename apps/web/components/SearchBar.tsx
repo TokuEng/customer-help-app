@@ -49,7 +49,7 @@ export function SearchBar({
       setSuggestions(results);
       setShowSuggestions(true);
       setSelectedIndex(-1);
-    } catch (error) {
+    } catch {
       // Failed to fetch suggestions
       setSuggestions([]);
     } finally {

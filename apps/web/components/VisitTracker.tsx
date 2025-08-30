@@ -13,7 +13,7 @@ export function VisitTracker({ articleId }: VisitTrackerProps) {
     const trackVisit = async () => {
       try {
         await api.trackArticleView(articleId);
-      } catch (error) {
+      } catch {
         // Silently fail - don't disrupt user experience for analytics
         // Failed to track article view
       }

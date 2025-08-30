@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       } else {
         // RAG search failed, continuing with empty contexts
       }
-    } catch (error) {
+    } catch {
       // RAG endpoint unavailable, continuing with empty contexts
       // Continue with empty contexts
     }
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       .join('\n---\n');
 
     // Check if any context is actually relevant to the question
-    const checkRelevance = (context: any, question: string): boolean => {
+    const checkRelevance = (context: { content_md?: string; summary?: string; title?: string }, question: string): boolean => {
       const content = (context.content_md || context.summary || '').toLowerCase();
       const title = (context.title || '').toLowerCase();
       const questionLower = question.toLowerCase();
@@ -175,7 +175,7 @@ ${paymentScheduleInfo}`
     });
 
     return result.toUIMessageStreamResponse();
-  } catch (error) {
+  } catch {
     // Internal error occurred
     return new Response('Internal server error', { status: 500 });
   }
