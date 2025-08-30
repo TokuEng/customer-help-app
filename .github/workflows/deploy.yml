@@ -1,4 +1,4 @@
-name: Deploy to DigitalOcean (Optimized)
+name: Deploy to DigitalOcean
 
 on:
   push:
