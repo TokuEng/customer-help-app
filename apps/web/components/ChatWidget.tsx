@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
+import { MessageCircle } from 'lucide-react';
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
@@ -47,7 +48,7 @@ export default function ChatWidget() {
         size="icon"
         aria-label="Open Toku Assistant"
       >
-        <span className="text-xl sm:text-2xl">💬</span>
+        <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
       </Button>
 
       {/* Chat Panel */}
