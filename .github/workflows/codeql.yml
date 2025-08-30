@@ -96,7 +96,7 @@ jobs:
       if: matrix.language == 'python'
       run: |
         cd apps/api && pip install -r requirements.txt
-        cd ../functions/ingestion && pip install -r requirements.txt
+        cd ../../functions/ingestion && pip install -r requirements.txt
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
