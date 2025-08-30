@@ -79,7 +79,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   </div>
                   
                   {article.summary && (
-                    <p className="mt-4 sm:mt-6 text-lg sm:text-xl leading-relaxed text-gray-600 border-l-4 border-primary pl-4 sm:pl-6 py-3 sm:py-4 brand-surface rounded-r-lg">{cleanMarkdown(article.summary)}</p>
+                    <p className="mt-4 sm:mt-6 text-base sm:text-lg leading-relaxed text-gray-600 border-l-4 border-primary pl-4 sm:pl-6 py-3 sm:py-4 brand-surface rounded-r-lg">{cleanMarkdown(article.summary)}</p>
                   )}
                 </header>
 
