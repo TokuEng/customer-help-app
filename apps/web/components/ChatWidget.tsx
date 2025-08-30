@@ -1,5 +1,7 @@
 'use client';
 
+import { MessageCircle } from 'lucide-react';
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { Button } from '@/components/ui/button';
@@ -47,7 +49,7 @@ export default function ChatWidget() {
         size="icon"
         aria-label="Open Toku Assistant"
       >
-        <span className="text-xl sm:text-2xl">💬</span>
+        <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" aria-hidden="true" />
       </Button>
 
       {/* Chat Panel */}
