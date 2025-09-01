@@ -53,6 +53,48 @@ create table article_views (
   viewed_at timestamptz default now()
 );
 
+-- Work submissions table
+create table work_submissions (
+  id uuid primary key default gen_random_uuid(),
+  -- Request details
+  request_type text not null,             -- Type of work submission
+  title text not null,                    -- Title/subject of the request
+  description text not null,              -- Detailed description
+  priority text,                          -- low | medium | high | urgent
+  status text default 'pending',          -- pending | in_progress | completed | rejected
+  
+  -- Submitter information
+  submitter_name text not null,
+  submitter_email text not null,
+  submitter_role text,                    -- employee | contractor | admin | other
+  department text,
+  
+  -- Additional metadata
+  attachments jsonb,                      -- Array of attachment URLs/metadata
+  tags text[],                            -- Array of tags for categorization
+  assigned_to text,                       -- Assignee name/email
+  
+  -- Timestamps
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  completed_at timestamptz,
+  
+  -- Notes and tracking
+  internal_notes text,                    -- For internal team use
+  resolution_notes text                   -- Final resolution/completion notes
+);
+
+-- Comments/updates table for tracking communication
+create table work_submission_comments (
+  id uuid primary key default gen_random_uuid(),
+  submission_id uuid references work_submissions(id) on delete cascade,
+  author_name text not null,
+  author_email text not null,
+  comment text not null,
+  is_internal boolean default false,      -- Internal comments not shown to submitter
+  created_at timestamptz default now()
+);
+
 -- Indexes
 create index idx_articles_slug on articles(slug);
 create index idx_articles_updated_at on articles(updated_at desc);
@@ -62,3 +104,12 @@ create index idx_chunks_article_id on chunks(article_id);
 create index idx_chunks_embedding on chunks using ivfflat (embedding vector_cosine_ops);
 create index idx_article_views_article_id on article_views(article_id);
 create index idx_article_views_viewed_at on article_views(viewed_at desc);
+
+-- Work submissions indexes
+create index idx_work_submissions_status on work_submissions(status);
+create index idx_work_submissions_priority on work_submissions(priority);
+create index idx_work_submissions_created_at on work_submissions(created_at desc);
+create index idx_work_submissions_submitter_email on work_submissions(submitter_email);
+create index idx_work_submissions_assigned_to on work_submissions(assigned_to);
+create index idx_work_submission_comments_submission_id on work_submission_comments(submission_id);
+create index idx_work_submission_comments_created_at on work_submission_comments(created_at desc);

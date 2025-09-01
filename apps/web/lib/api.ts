@@ -89,6 +89,38 @@ export interface CategoryCount {
   count: number;
 }
 
+export interface WorkSubmissionRequest {
+  request_type: string;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  submitter_name: string;
+  submitter_email: string;
+  submitter_role?: string;
+  department?: string;
+  tags?: string[];
+  attachments?: Record<string, unknown>[];
+}
+
+export interface WorkSubmissionResponse {
+  id: string;
+  request_type: string;
+  title: string;
+  description: string;
+  priority: string;
+  status: string;
+  submitter_name: string;
+  submitter_email: string;
+  submitter_role?: string;
+  department?: string;
+  tags: string[];
+  attachments?: Record<string, unknown>[];
+  assigned_to?: string;
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+}
+
 class APIClient {
   private async fetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const baseUrl = getApiBaseUrl();
@@ -155,6 +187,35 @@ class APIClient {
 
   async getCategoryCounts(): Promise<CategoryCount[]> {
     return this.fetch<CategoryCount[]>('/category-counts');
+  }
+
+  async submitWorkRequest(request: WorkSubmissionRequest): Promise<WorkSubmissionResponse> {
+    return this.fetch<WorkSubmissionResponse>('/work-submissions', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async getWorkSubmissions(params?: {
+    status?: string;
+    priority?: string;
+    submitter_email?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<WorkSubmissionResponse[]> {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.priority) queryParams.append('priority', params.priority);
+    if (params?.submitter_email) queryParams.append('submitter_email', params.submitter_email);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.offset) queryParams.append('offset', params.offset.toString());
+    
+    const query = queryParams.toString();
+    return this.fetch<WorkSubmissionResponse[]>(`/work-submissions${query ? `?${query}` : ''}`);
+  }
+
+  async getWorkSubmission(id: string): Promise<WorkSubmissionResponse> {
+    return this.fetch<WorkSubmissionResponse>(`/work-submissions/${id}`);
   }
 }
 

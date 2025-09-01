@@ -126,7 +126,7 @@ export default function EmployerCostPage() {
           </div>
           <p className="text-sm sm:text-base text-gray-600 max-w-3xl">
             Calculate the total cost of employment including all social contributions, taxes, and employer burdens. 
-            Get AI-powered explanations and client-ready email summaries.
+            Get AI-powered explanations and create professional offer emails for candidates.
           </p>
         </div>
 
@@ -178,7 +178,7 @@ export default function EmployerCostPage() {
                 ) : (
                   <>
                     <Mail className="mr-2 h-4 w-4" />
-                    Generate Client Email
+                    Create offer email
                   </>
                 )}
               </Button>

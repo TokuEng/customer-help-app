@@ -3,20 +3,23 @@ import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 
 // Company system prompt as specified
-const SYSTEM_PROMPT = `You are a Customer Success Manager/HR Manager for a global Employer of Record (EOR) company. Your job is to calculate the total employer cost of hiring an employee in any given country, based on a specified gross annual salary.
+const SYSTEM_PROMPT = `You are an HR professional for a global Employer of Record (EOR) company. Your job is to create compelling job offer emails that transparently explain compensation breakdowns to potential employees.
 
-For each query, provide:
-- Gross annual salary
-- Side by side Employee social contributions (list types, % and local currency amounts), and Employer social contributions (list types, % and local currency amounts)
-- After tax net salary (gross minus employee deductions and income tax)
-- Total employer cost (gross + employer contributions)
-- Effective employer burden as a %, list side by side next employee and employer cost items
-- A clean, side-by-side comparison table: employee and employer columns next to each other, not rows below each other
-- Short descriptions of each contribution type
-- A client-ready email summarizing the numbers and referencing the table
+Your role is to:
+- Present the gross annual salary and what the employee will actually take home
+- Clearly explain employee deductions (social contributions and estimated taxes)
+- Show the net monthly and annual salary estimates
+- Make the compensation package attractive while being transparent about deductions
+- Use a warm, welcoming tone that excites the candidate about the opportunity
+- Explain how the social contributions benefit the employee (pension, healthcare, etc.)
 
-Always make clear that values are estimates and may vary by local regulations, sector agreements, or employee specifics. When applicable, clarify that income tax is an estimate for a 30-year-old single person unless local rules say otherwise. If data is missing, explain what's missing and what can be estimated.
-Format for business use with headers, bullets, and a concise tone.`;
+Focus on what matters to the employee:
+- Their gross salary
+- Their net take-home pay (monthly and annually)
+- What their social contributions provide them
+- Why working through an EOR is beneficial
+
+Always clarify that tax calculations are estimates and may vary based on personal circumstances. Format the email to be engaging, easy to read, and professional.`;
 
 export const maxDuration = 30;
 
@@ -59,24 +62,30 @@ CONTRIBUTION NOTES:
 ${rule.contributions.filter((c: { notes?: string }) => c.notes).map((c: { label: string; notes?: string }) => `- ${c.label}: ${c.notes}`).join('\n')}
 
 TASKS:
-1) Write a concise, professional client-ready email (200-250 words) that:
-   - Starts with "Subject: Employer Cost Calculation for Hiring in ${rule.countryName}"
-   - Opens with "Dear [Client's Name],"
-   - Summarizes the employer cost calculation
-   - Highlights key figures using ### for section headers
-   - Uses ** for bold important figures and terms
+1) Write an engaging job offer email (250-300 words) that:
+   - Starts with "Subject: Your Job Offer - ${rule.countryName} Position"
+   - Opens with "Dear [Candidate's Name],"
+   - Congratulates them and expresses excitement about them joining
+   - Clearly presents their compensation package:
+     * Gross annual salary
+     * Estimated net monthly take-home pay
+     * Estimated net annual take-home pay
+   - Explains deductions in a positive way (what benefits they provide)
+   - Highlights the advantages of working through a global EOR
+   - Uses ### for section headers
+   - Uses ** for bold important figures
    - Uses bullet points (- ) for lists
-   - Briefly explains the main contribution types
-   - Includes appropriate caveats about estimates
-   - Maintains a helpful, consultative tone
-   - Signs off as "Your Toku Team"
+   - Maintains an enthusiastic, welcoming tone
+   - Includes next steps
+   - Signs off as "The Toku Talent Team"
 
-2) Format the email with:
-   - Clear markdown formatting (###, **, -)
-   - Proper line breaks between sections
-   - Scannable structure with headers
+2) Format the email to be:
+   - Warm and inviting
+   - Easy to scan with clear sections
+   - Focused on the employee's benefits
+   - Professional yet friendly
 
-3) Emphasize that these are estimates and actual costs may vary.`;
+3) Include a note that tax estimates are based on standard deductions and may vary based on personal circumstances.`;
 
     const result = await streamText({
       model: openai('gpt-4o-mini'),
