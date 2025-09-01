@@ -87,10 +87,12 @@ export default function ChatWidget() {
                   <p className="text-xs text-gray-500 mb-2">Try asking:</p>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {[
-                      "When is the invoice deadline?",
-                      "What are this month's payment dates?",
-                      "When do contractors get paid?",
-                      "What is the pre-funding schedule?"
+                      "How to review and approve expenses?",
+                      "How to enable Token Payroll?",
+                      "How to submit an automated invoice?",
+                      "How to approve time off requests?",
+                      "What are Toku supplemental benefits?",
+                      "When is the next payment date?"
                     ].map((question, i) => (
                       <button
                         key={i}
