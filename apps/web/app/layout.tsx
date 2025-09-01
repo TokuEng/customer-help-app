@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { TopLoadingBar } from "@/components/TopLoadingBar";
 import ChatWidget from "@/components/ChatWidget";
 import GlobalCommand from "@/components/GlobalCommand";
-import { WorkSubmissionForm } from "@/components/WorkSubmissionForm";
+
 
 export const metadata: Metadata = {
   title: "Toku Help Center",
@@ -36,7 +36,6 @@ export default function RootLayout({
         <Footer />
         <ChatWidget />
         <GlobalCommand />
-        <WorkSubmissionForm />
       </body>
     </html>
   );

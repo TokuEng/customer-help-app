@@ -19,8 +19,12 @@ interface WorkSubmissionFormData {
   tags: string[];
 }
 
-export function WorkSubmissionForm() {
-  const [isOpen, setIsOpen] = useState(false);
+interface WorkSubmissionFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function WorkSubmissionForm({ isOpen, onClose }: WorkSubmissionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +61,7 @@ export function WorkSubmissionForm() {
       // Reset form after 3 seconds
       setTimeout(() => {
         setSubmitted(false);
-        setIsOpen(false);
+        onClose();
         setFormData({
           request_type: '',
           title: '',
@@ -102,19 +106,7 @@ export function WorkSubmissionForm() {
     }));
   };
 
-  if (!isOpen) {
-    return (
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          onClick={() => setIsOpen(true)}
-          size="lg"
-          className="shadow-lg hover:shadow-xl transition-shadow gap-2"
-        >
-          ➕ Submit Work Request
-        </Button>
-      </div>
-    );
-  }
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
@@ -130,7 +122,7 @@ export function WorkSubmissionForm() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsOpen(false)}
+              onClick={onClose}
               className="h-8 w-8 p-0"
             >
               ✕
@@ -301,7 +293,7 @@ export function WorkSubmissionForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsOpen(false)}
+                  onClick={onClose}
                   disabled={isSubmitting}
                 >
                   Cancel
