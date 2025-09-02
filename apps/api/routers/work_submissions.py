@@ -4,6 +4,8 @@ from typing import Optional, List
 from datetime import datetime
 import uuid
 import asyncpg
+from asyncpg.types import Json
+import json
 
 router = APIRouter()
 
@@ -116,8 +118,8 @@ async def create_work_submission(request: Request, submission: WorkSubmissionReq
                 submission.submitter_email,
                 submission.submitter_role,
                 submission.department,
-                submission.tags,
-                submission.attachments  # PostgreSQL will handle the JSON conversion
+                submission.tags or [],  # Ensure tags is always a list
+                Json(submission.attachments or [])  # Wrap in Json() for proper jsonb handling
             )
             
             logger.info(f"Insert successful, record ID: {result['id']}")
