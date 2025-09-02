@@ -4,7 +4,6 @@ from typing import Optional, List
 from datetime import datetime
 import uuid
 import asyncpg
-from asyncpg.types import Json
 import json
 
 router = APIRouter()
@@ -119,7 +118,7 @@ async def create_work_submission(request: Request, submission: WorkSubmissionReq
                 submission.submitter_role,
                 submission.department,
                 submission.tags or [],  # Ensure tags is always a list
-                Json(submission.attachments or [])  # Wrap in Json() for proper jsonb handling
+                json.dumps(submission.attachments or [])  # Convert to JSON string for jsonb column
             )
             
             logger.info(f"Insert successful, record ID: {result['id']}")
