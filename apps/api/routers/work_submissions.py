@@ -3,6 +3,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 import uuid
+import asyncpg
 
 router = APIRouter()
 
@@ -53,15 +54,49 @@ class WorkSubmissionUpdateRequest(BaseModel):
 @router.post("/work-submissions", response_model=WorkSubmissionResponse)
 async def create_work_submission(request: Request, submission: WorkSubmissionRequest):
     """Create a new work submission request"""
-    db_pool = request.app.state.db_pool()
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"Received work submission request: {submission.dict()}")
     
     try:
-        # Validate priority
+        db_pool = request.app.state.db_pool()
+    except Exception as e:
+        logger.error(f"Failed to get db_pool: {type(e).__name__}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database pool access error: {type(e).__name__}"
+        )
+    
+    # Check if database pool is available
+    if db_pool is None:
+        logger.error("Database pool is None")
+        raise HTTPException(
+            status_code=500, 
+            detail="Database connection not available. Please check server configuration."
+        )
+    
+    try:
+        # Validate and normalize priority
         valid_priorities = ["low", "medium", "high", "urgent"]
-        if submission.priority not in valid_priorities:
+        # Normalize priority to lowercase
+        normalized_priority = submission.priority.lower() if submission.priority else "medium"
+        
+        if normalized_priority not in valid_priorities:
+            logger.warning(f"Invalid priority: {submission.priority} (normalized: {normalized_priority})")
             raise HTTPException(status_code=400, detail=f"Invalid priority. Must be one of: {', '.join(valid_priorities)}")
         
+        # Update the submission object with normalized priority
+        submission.priority = normalized_priority
+        
+        logger.info("Acquiring database connection...")
         async with db_pool.acquire() as conn:
+            logger.info("Database connection acquired, preparing insert...")
+            
+            # Log the actual values being inserted
+            logger.info(f"Insert values: type={submission.request_type}, title={submission.title}, "
+                       f"priority={submission.priority}, email={submission.submitter_email}")
+            
             # Insert the work submission
             result = await conn.fetchrow(
                 """
@@ -85,6 +120,8 @@ async def create_work_submission(request: Request, submission: WorkSubmissionReq
                 submission.attachments  # PostgreSQL will handle the JSON conversion
             )
             
+            logger.info(f"Insert successful, record ID: {result['id']}")
+            
             return WorkSubmissionResponse(
                 id=str(result['id']),
                 request_type=result['request_type'],
@@ -104,8 +141,24 @@ async def create_work_submission(request: Request, submission: WorkSubmissionReq
                 completed_at=result['completed_at']
             )
             
+    except asyncpg.PostgresError as e:
+        # Database-specific errors
+        logger.error(f"PostgreSQL error: {e.__class__.__name__}: {str(e)}")
+        logger.error(f"Error details: {repr(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Database error: {e.__class__.__name__}: {str(e)}"
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # General errors
+        logger.error(f"Unexpected error: {e.__class__.__name__}: {str(e)}")
+        logger.error(f"Error details: {repr(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Internal server error: {e.__class__.__name__}: {str(e)}"
+        )
 
 @router.get("/work-submissions", response_model=List[WorkSubmissionResponse])
 async def list_work_submissions(

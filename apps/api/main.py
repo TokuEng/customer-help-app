@@ -2,7 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncpg
+import logging
 from core.settings import settings
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Database connection pool
 db_pool = None
@@ -11,10 +19,27 @@ db_pool = None
 async def lifespan(app: FastAPI):
     global db_pool
     # Startup
-    db_pool = await asyncpg.create_pool(settings.database_url)
+    logger.info("Starting up API server...")
+    logger.info(f"Database URL: {settings.database_url[:50]}...")
+    
+    try:
+        db_pool = await asyncpg.create_pool(settings.database_url)
+        logger.info("Database pool created successfully")
+        
+        # Test the connection
+        async with db_pool.acquire() as conn:
+            version = await conn.fetchval('SELECT version()')
+            logger.info(f"Connected to database: {version.split(',')[0]}")
+    except Exception as e:
+        logger.error(f"Failed to create database pool: {type(e).__name__}: {str(e)}")
+        raise
+    
     yield
+    
     # Shutdown
+    logger.info("Shutting down API server...")
     await db_pool.close()
+    logger.info("Database pool closed")
 
 app = FastAPI(
     title="Customer Help Center API",
