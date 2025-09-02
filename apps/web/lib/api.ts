@@ -217,6 +217,19 @@ class APIClient {
   async getWorkSubmission(id: string): Promise<WorkSubmissionResponse> {
     return this.fetch<WorkSubmissionResponse>(`/work-submissions/${id}`);
   }
+
+  async updateWorkSubmission(id: string, updates: {
+    status?: string;
+    priority?: string;
+    assigned_to?: string;
+    internal_notes?: string;
+    resolution_notes?: string;
+  }): Promise<WorkSubmissionResponse> {
+    return this.fetch<WorkSubmissionResponse>(`/work-submissions/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
 }
 
 export const api = new APIClient();
