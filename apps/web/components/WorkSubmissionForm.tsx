@@ -45,6 +45,9 @@ export function WorkSubmissionForm({ isOpen, onClose }: WorkSubmissionFormProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [emailSuggestions, setEmailSuggestions] = useState<string[]>([]);
+  const [showEmailSuggestions, setShowEmailSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -101,6 +104,72 @@ export function WorkSubmissionForm({ isOpen, onClose }: WorkSubmissionFormProps)
 
   const handleRemoveTag = (tagToRemove: string) => {
     form.setValue('tags', currentTags.filter(tag => tag !== tagToRemove));
+  };
+
+  // Email domain suggestions
+  const emailDomains = ['@toku.com', '@gmail.com', '@yahoo.com', '@outlook.com', '@hotmail.com'];
+  
+  const handleEmailChange = (value: string) => {
+    form.setValue('submitter_email', value);
+    
+    // Show suggestions immediately when typing starts
+    if (value.trim()) {
+      if (value.includes('@')) {
+        // If @ is present, filter domains based on what's typed after @
+        const [localPart, domainPart = ''] = value.split('@');
+        const suggestions = emailDomains
+          .filter(domain => domain.substring(1).startsWith(domainPart))
+          .map(domain => localPart + domain);
+        setEmailSuggestions(suggestions);
+        setShowEmailSuggestions(suggestions.length > 0);
+      } else {
+        // If no @ yet, show all domain suggestions
+        const suggestions = emailDomains.map(domain => value + domain);
+        setEmailSuggestions(suggestions);
+        setShowEmailSuggestions(true);
+      }
+      setSelectedSuggestionIndex(0); // Reset selection when suggestions change
+    } else {
+      setShowEmailSuggestions(false);
+      setEmailSuggestions([]);
+    }
+  };
+
+  const selectEmailSuggestion = (email: string) => {
+    form.setValue('submitter_email', email);
+    setShowEmailSuggestions(false);
+  };
+
+  const handleEmailKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showEmailSuggestions || emailSuggestions.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => 
+          prev < emailSuggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => 
+          prev > 0 ? prev - 1 : prev
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        selectEmailSuggestion(emailSuggestions[selectedSuggestionIndex]);
+        break;
+      case 'Tab':
+        if (emailSuggestions.length > 0) {
+          e.preventDefault();
+          selectEmailSuggestion(emailSuggestions[selectedSuggestionIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowEmailSuggestions(false);
+        break;
+    }
   };
 
   if (!isOpen) return null;
@@ -271,17 +340,61 @@ export function WorkSubmissionForm({ isOpen, onClose }: WorkSubmissionFormProps)
                     control={form.control}
                     name="submitter_email"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="relative">
                         <FormLabel className="text-xs font-medium">
                           Email <span className="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
-                          <input
-                            type="email"
-                            placeholder="john@example.com"
-                            className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            {...field}
-                          />
+                          <div className="relative">
+                            <input
+                              type="email"
+                              placeholder="john@example.com"
+                              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                handleEmailChange(e.target.value);
+                              }}
+                              onKeyDown={handleEmailKeyDown}
+                              onBlur={() => {
+                                field.onBlur();
+                                setTimeout(() => setShowEmailSuggestions(false), 200);
+                              }}
+                              onFocus={(e) => {
+                                // Show suggestions on focus if there's text
+                                if (e.target.value.trim()) {
+                                  handleEmailChange(e.target.value);
+                                }
+                              }}
+                            />
+                            {showEmailSuggestions && emailSuggestions.length > 0 && (
+                              <div className="absolute z-10 w-full mt-1 bg-white rounded-lg border border-gray-200 shadow-lg">
+                                {emailSuggestions.map((suggestion, index) => (
+                                  <button
+                                    key={index}
+                                    type="button"
+                                    className={`w-full px-3 py-2 text-sm text-left focus:outline-none first:rounded-t-lg last:rounded-b-lg transition-colors ${
+                                      index === selectedSuggestionIndex
+                                        ? 'bg-blue-50 text-blue-900'
+                                        : 'hover:bg-gray-50'
+                                    }`}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      selectEmailSuggestion(suggestion);
+                                    }}
+                                    onMouseEnter={() => setSelectedSuggestionIndex(index)}
+                                  >
+                                    <span className={index === selectedSuggestionIndex ? 'text-blue-700' : 'text-gray-600'}>
+                                      {suggestion.split('@')[0]}
+                                    </span>
+                                    <span className={`font-medium ${index === selectedSuggestionIndex ? 'text-blue-900' : 'text-gray-900'}`}>
+                                      @{suggestion.split('@')[1]}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
                       </FormItem>
