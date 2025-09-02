@@ -29,7 +29,7 @@ for var in spaces_vars:
         env[var] = os.environ[var]
 
 # Enable parallel processing (process 5 articles at a time)
-env['INGESTION_PARALLEL'] = '5'
+env['INGESTION_PARALLEL'] = '10'
 
 # Use DigitalOcean Meilisearch droplet (public endpoint)
 env['MEILI_HOST'] = 'http://147.182.245.91:7700'
