@@ -123,6 +123,13 @@ async def create_work_submission(request: Request, submission: WorkSubmissionReq
             
             logger.info(f"Insert successful, record ID: {result['id']}")
             
+            # Parse attachments back from JSON string if needed
+            attachments = result['attachments']
+            if isinstance(attachments, str):
+                attachments = json.loads(attachments)
+            elif attachments is None:
+                attachments = []
+            
             return WorkSubmissionResponse(
                 id=str(result['id']),
                 request_type=result['request_type'],
@@ -135,7 +142,7 @@ async def create_work_submission(request: Request, submission: WorkSubmissionReq
                 submitter_role=result['submitter_role'],
                 department=result['department'],
                 tags=result['tags'] or [],
-                attachments=result['attachments'] or [],
+                attachments=attachments,
                 assigned_to=result['assigned_to'],
                 created_at=result['created_at'],
                 updated_at=result['updated_at'],
@@ -207,8 +214,16 @@ async def list_work_submissions(
             
             results = await conn.fetch(query, *params)
             
-            return [
-                WorkSubmissionResponse(
+            submissions = []
+            for row in results:
+                # Parse attachments if needed
+                attachments = row['attachments']
+                if isinstance(attachments, str):
+                    attachments = json.loads(attachments)
+                elif attachments is None:
+                    attachments = []
+                
+                submissions.append(WorkSubmissionResponse(
                     id=str(row['id']),
                     request_type=row['request_type'],
                     title=row['title'],
@@ -220,14 +235,14 @@ async def list_work_submissions(
                     submitter_role=row['submitter_role'],
                     department=row['department'],
                     tags=row['tags'] or [],
-                    attachments=row['attachments'] or [],
+                    attachments=attachments,
                     assigned_to=row['assigned_to'],
                     created_at=row['created_at'],
                     updated_at=row['updated_at'],
                     completed_at=row['completed_at']
-                )
-                for row in results
-            ]
+                ))
+            
+            return submissions
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -250,6 +265,13 @@ async def get_work_submission(request: Request, submission_id: str):
             if not result:
                 raise HTTPException(status_code=404, detail="Work submission not found")
             
+            # Parse attachments if needed
+            attachments = result['attachments']
+            if isinstance(attachments, str):
+                attachments = json.loads(attachments)
+            elif attachments is None:
+                attachments = []
+            
             return WorkSubmissionResponse(
                 id=str(result['id']),
                 request_type=result['request_type'],
@@ -262,7 +284,7 @@ async def get_work_submission(request: Request, submission_id: str):
                 submitter_role=result['submitter_role'],
                 department=result['department'],
                 tags=result['tags'] or [],
-                attachments=result['attachments'] or [],
+                attachments=attachments,
                 assigned_to=result['assigned_to'],
                 created_at=result['created_at'],
                 updated_at=result['updated_at'],
@@ -346,6 +368,13 @@ async def update_work_submission(
             
             result = await conn.fetchrow(query, *params)
             
+            # Parse attachments if needed
+            attachments = result['attachments']
+            if isinstance(attachments, str):
+                attachments = json.loads(attachments)
+            elif attachments is None:
+                attachments = []
+            
             return WorkSubmissionResponse(
                 id=str(result['id']),
                 request_type=result['request_type'],
@@ -358,7 +387,7 @@ async def update_work_submission(
                 submitter_role=result['submitter_role'],
                 department=result['department'],
                 tags=result['tags'] or [],
-                attachments=result['attachments'] or [],
+                attachments=attachments,
                 assigned_to=result['assigned_to'],
                 created_at=result['created_at'],
                 updated_at=result['updated_at'],
