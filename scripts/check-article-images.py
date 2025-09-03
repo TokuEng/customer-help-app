@@ -189,3 +189,4 @@ if __name__ == "__main__":
     import sys
     article_title = sys.argv[1] if len(sys.argv) > 1 else "How To Create an Employee Report"
     asyncio.run(check_article_images(article_title))
+

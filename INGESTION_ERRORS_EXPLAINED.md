@@ -61,3 +61,4 @@ BATCH_SIZE = 1  # Process articles sequentially instead of 5 at a time
 ✅ Your images are fixed and working
 ✅ The errors didn't prevent successful ingestion
 ✅ The production site should show images correctly now
+
