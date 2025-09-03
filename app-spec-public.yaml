@@ -18,6 +18,8 @@ services:
         value: production
       - key: NEXT_PUBLIC_API_URL
         value: ${APP_URL}/api
+      - key: BACKEND_URL
+        value: http://api:8080
       - key: REVALIDATE_TOKEN
         type: SECRET
         value: MJHXGOOpaglqgS3f+4l3P6aYXfoYlE3LghMSHt9w7gw=
