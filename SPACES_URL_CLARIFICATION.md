@@ -62,3 +62,4 @@ SPACES_CDN_ENDPOINT=https://customer-help-app-notion-images.sfo3.cdn.digitalocea
 - The bucket MUST be set to "Public" for images to work
 - CDN is optional but recommended for better performance
 - You only need to redeploy if you change the CDN endpoint
+

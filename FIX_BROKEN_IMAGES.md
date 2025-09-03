@@ -51,3 +51,4 @@ When creating new Spaces buckets for public content, always:
 1. Set File Listing to "Public" during creation
 2. Configure CORS immediately
 3. Test with a sample file before deploying
+
