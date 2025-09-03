@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { SearchBar } from '@/components/SearchBar';
 import { ResultCard } from '@/components/ResultCard';
 import { SearchFilters } from '@/components/SearchFilters';
+import { SearchPageTracker } from '@/components/SearchPageTracker';
 import { api } from '@/lib/api';
 import { SearchProgress } from '@/components/LoadingProgress';
 
@@ -38,6 +39,7 @@ async function SearchResults({ searchParams }: SearchPageProps) {
 
     return (
       <div className="space-y-6">
+        <SearchPageTracker resultsCount={results.length} />
         <p className="text-sm text-gray-600 mb-4 font-medium">
           {query ? `Found ${results.length} results for "${query}"` : `Showing ${results.length} articles`}
         </p>

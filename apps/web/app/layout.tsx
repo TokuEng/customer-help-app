@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { TopLoadingBar } from "@/components/TopLoadingBar";
 import ChatWidget from "@/components/ChatWidget";
 import GlobalCommand from "@/components/GlobalCommand";
+import { PageVisitTracker } from "@/components/PageVisitTracker";
 
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen flex flex-col">
         <TopLoadingBar />
+        <PageVisitTracker />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

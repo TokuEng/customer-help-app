@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
+import { ChatTracker } from '@/components/ChatTracker';
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
@@ -17,8 +18,21 @@ export default function ChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const { messages, sendMessage } = useChat({
-    onFinish: () => {
+    onFinish: (message) => {
       setIsLoading(false);
+      
+      // Track the completed chat interaction
+      if (messages.length > 0) {
+        const lastUserMessage = messages[messages.length - 1];
+        if (lastUserMessage?.role === 'user' && lastUserMessage?.content) {
+          ChatTracker.trackChatComplete(
+            lastUserMessage.content.toString(),
+            message.content || '',
+            Date.now() - 2000, // Rough estimate for response time
+            [] // We could pass RAG contexts here if available
+          );
+        }
+      }
     }
   });
 
@@ -34,8 +48,13 @@ export default function ChatWidget() {
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (input.trim() && !isLoading) {
+      const userMessage = input.trim();
+      
+      // Track the user message
+      ChatTracker.trackUserMessage(userMessage);
+      
       setIsLoading(true);
-      sendMessage({ text: input });
+      sendMessage({ text: userMessage });
       setInput('');
     }
   };
@@ -98,6 +117,10 @@ export default function ChatWidget() {
                         key={i}
                         onClick={() => {
                           setInput(question);
+                          
+                          // Track the suggested question click
+                          ChatTracker.trackUserMessage(question);
+                          
                           setIsLoading(true);
                           sendMessage({ text: question });
                         }}

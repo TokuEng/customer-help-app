@@ -185,6 +185,73 @@ class APIClient {
     return this.fetch<PopularArticle[]>(`/popular-articles?limit=${limit}`);
   }
 
+  // New analytics tracking methods
+  async trackSearch(query: string, filters?: Record<string, unknown>, resultsCount: number = 0): Promise<{ success: boolean }> {
+    return this.fetch<{ success: boolean }>('/track-search', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        query, 
+        filters, 
+        results_count: resultsCount 
+      }),
+    });
+  }
+
+  async trackChat(
+    sessionId: string | null, 
+    userMessage: string, 
+    assistantResponse?: string, 
+    contextsUsed?: unknown[], 
+    responseTimeMs?: number
+  ): Promise<{ success: boolean }> {
+    return this.fetch<{ success: boolean }>('/track-chat', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        session_id: sessionId,
+        user_message: userMessage,
+        assistant_response: assistantResponse,
+        contexts_used: contextsUsed,
+        response_time_ms: responseTimeMs
+      }),
+    });
+  }
+
+  async trackPageVisit(pagePath: string, pageTitle?: string, referrer?: string): Promise<{ success: boolean }> {
+    return this.fetch<{ success: boolean }>('/track-page-visit', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        page_path: pagePath,
+        page_title: pageTitle,
+        referrer: referrer
+      }),
+    });
+  }
+
+  // Analytics dashboard methods (admin-only)
+  async getSearchStats(days: number = 30, adminKey?: string): Promise<unknown> {
+    return this.fetch<unknown>(`/search-stats?days=${days}`, {
+      headers: adminKey ? { 'admin-key': adminKey } : {},
+    });
+  }
+
+  async getChatStats(days: number = 30, adminKey?: string): Promise<unknown> {
+    return this.fetch<unknown>(`/chat-stats?days=${days}`, {
+      headers: adminKey ? { 'admin-key': adminKey } : {},
+    });
+  }
+
+  async getPageVisitStats(days: number = 30, adminKey?: string): Promise<unknown> {
+    return this.fetch<unknown>(`/page-visit-stats?days=${days}`, {
+      headers: adminKey ? { 'admin-key': adminKey } : {},
+    });
+  }
+
+  async getAnalyticsDashboard(days: number = 30, adminKey?: string): Promise<unknown> {
+    return this.fetch<unknown>(`/dashboard?days=${days}`, {
+      headers: adminKey ? { 'admin-key': adminKey } : {},
+    });
+  }
+
   async getCategoryCounts(): Promise<CategoryCount[]> {
     return this.fetch<CategoryCount[]>('/category-counts');
   }
