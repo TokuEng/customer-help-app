@@ -81,6 +81,76 @@ services:
     routes:
       - path: /api
 
+# Scheduled Worker for Automatic Ingestion
+workers:
+  - name: ingestion-scheduler
+    github:
+      repo: TokuEng/customer-help-app
+      branch: main
+      deploy_on_push: true
+    source_dir: /
+    build_command: |
+      apt-get update && apt-get install -y cron
+      pip install -r apps/api/requirements.txt
+      pip install -r functions/ingestion/requirements.txt
+    run_command: |
+      # Create log directory
+      mkdir -p /var/log/ingestion
+      
+      # Create cron job for ingestion (every 15 minutes)
+      echo "*/15 * * * * cd /workspace && /usr/local/bin/python scripts/scheduled-ingestion.py >> /var/log/ingestion/cron.log 2>&1" | crontab -
+      
+      # Also run once on startup
+      cd /workspace && python scripts/scheduled-ingestion.py
+      
+      # Start cron in foreground
+      cron -f
+    instance_count: 1
+    instance_size_slug: basic-xs
+    envs:
+      - key: DATABASE_URL
+        value: ${customer-help-db.DATABASE_URL}
+      - key: MEILI_HOST
+        value: http://10.124.0.39:7700
+      - key: MEILI_MASTER_KEY
+        type: SECRET
+        value: ${MEILI_MASTER_KEY}
+      - key: NOTION_TOKEN
+        type: SECRET
+        value: ${NOTION_TOKEN}
+      - key: NOTION_INDEX_PAGE_ID
+        value: 2030b95a751d80eaac8df6267041fb14
+      - key: EMBEDDINGS_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        type: SECRET
+        value: ${OPENAI_API_KEY}
+      - key: REVALIDATE_TOKEN
+        type: SECRET
+        value: ${REVALIDATE_TOKEN}
+      - key: WEB_BASE_URL
+        value: ${APP_URL}
+      - key: API_URL
+        value: http://api:8080
+      - key: SPACES_KEY
+        type: SECRET
+        value: ${SPACES_KEY}
+      - key: SPACES_SECRET
+        type: SECRET
+        value: ${SPACES_SECRET}
+      - key: SPACES_BUCKET
+        value: customer-help-app-notion-images
+      - key: SPACES_REGION
+        value: sfo3
+      - key: SPACES_CDN_ENDPOINT
+        value: https://customer-help-app-notion-images.sfo3.cdn.digitaloceanspaces.com
+      - key: INGESTION_PARALLEL
+        value: "10"
+      - key: USE_API_TRIGGER
+        value: "true"  # Use API endpoint to avoid duplicate runs
+      - key: DO_DEPLOYMENT
+        value: "true"
+
 databases:
   - cluster_name: customer-help-db
     db_name: defaultdb

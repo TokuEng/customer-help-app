@@ -1,325 +1,391 @@
-'use client';
+'use client'
 
-import { useState, useEffect, useCallback } from 'react';
-import { api } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Search, MessageSquare, Eye, Users, RefreshCw } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { format } from 'date-fns'
+import { getAuthToken } from '@/lib/auth-token'
 
-interface DashboardData {
-  article_views: {
-    total: number;
-    unique_articles: number;
-  };
-  searches: {
-    total: number;
-    unique_queries: number;
-  };
-  chats: {
-    total: number;
-    unique_sessions: number;
-  };
-  page_visits: {
-    total: number;
-    unique_pages: number;
-  };
-  time_range: string;
+interface AnalyticsOverview {
+  period_days: number
+  article_metrics: {
+    total_views: number
+    unique_articles_viewed: number
+  }
+  search_metrics: {
+    total_searches: number
+    unique_queries: number
+  }
+  chat_metrics: {
+    total_chats: number
+    unique_sessions: number
+  }
+  page_visits: number
+  popular_articles: Array<{
+    id: string
+    slug: string
+    title: string
+    view_count: number
+  }>
+  top_search_queries: Array<{
+    query: string
+    count: number
+    avg_results: number
+  }>
 }
 
-interface SearchStats {
-  total_searches: number;
-  unique_queries: number;
-  top_queries: Array<{
-    query: string;
-    count: number;
-    avg_results: number;
-  }>;
-  avg_results_count: number;
+interface TrendsData {
+  views?: Array<{ date: string; count: number }>
+  searches?: Array<{ date: string; count: number }>
+  chats?: Array<{ date: string; count: number }>
 }
 
-interface ChatStats {
-  total_chats: number;
-  unique_sessions: number;
-  avg_response_time_ms: number | null;
-  top_questions: Array<{
-    question: string;
-    count: number;
-  }>;
-}
+export default function AnalyticsAdmin() {
+  const [overview, setOverview] = useState<AnalyticsOverview | null>(null)
+  const [trends, setTrends] = useState<TrendsData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [periodDays, setPeriodDays] = useState('7')
+  const [activeTab, setActiveTab] = useState('overview')
 
-interface PageVisitStats {
-  total_visits: number;
-  unique_pages: number;
-  top_pages: Array<{
-    path: string;
-    title: string | null;
-    count: number;
-  }>;
-}
-
-export default function AdminAnalyticsPage() {
-  const [adminKey, setAdminKey] = useState('');
-  const [authenticated, setAuthenticated] = useState(false);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [searchStats, setSearchStats] = useState<SearchStats | null>(null);
-  const [chatStats, setChatStats] = useState<ChatStats | null>(null);
-  const [pageVisitStats, setPageVisitStats] = useState<PageVisitStats | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [days, setDays] = useState(30);
-
-  const loadAllData = useCallback(async () => {
-    if (!authenticated || !adminKey) return;
-    
-    setLoading(true);
+  const fetchAnalytics = useCallback(async () => {
     try {
-      const [dashboard, search, chat, pageVisit] = await Promise.all([
-        api.getAnalyticsDashboard(days, adminKey),
-        api.getSearchStats(days, adminKey),
-        api.getChatStats(days, adminKey),
-        api.getPageVisitStats(days, adminKey),
-      ]);
+      const token = getAuthToken()
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'
       
-      setDashboardData(dashboard as DashboardData);
-      setSearchStats(search as SearchStats);
-      setChatStats(chat as ChatStats);
-      setPageVisitStats(pageVisit as PageVisitStats);
-      setError(null);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load analytics data');
-    } finally {
-      setLoading(false);
-    }
-  }, [authenticated, adminKey, days]);
+      // Fetch overview
+      const overviewRes = await fetch(`${apiUrl}/admin/analytics/overview?days=${periodDays}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      if (!overviewRes.ok) {
+        console.error('Analytics overview response not ok:', overviewRes.status, overviewRes.statusText)
+        const text = await overviewRes.text()
+        console.error('Response body:', text)
+        throw new Error(`Failed to fetch analytics overview: ${overviewRes.status}`)
+      }
+      
+      const overviewData = await overviewRes.json()
+      setOverview(overviewData)
 
-  const handleAuth = async () => {
-    if (!adminKey.trim()) {
-      setError('Please enter an admin key');
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Test authentication by fetching dashboard data
-      await api.getAnalyticsDashboard(days, adminKey);
-      setAuthenticated(true);
-      await loadAllData();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Invalid admin key');
-      setAuthenticated(false);
+      // Fetch trends
+      const trendsRes = await fetch(`${apiUrl}/admin/analytics/trends?days=${periodDays}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      if (!trendsRes.ok) {
+        console.error('Analytics trends response not ok:', trendsRes.status, trendsRes.statusText)
+        const text = await trendsRes.text()
+        console.error('Response body:', text)
+        throw new Error(`Failed to fetch analytics trends: ${trendsRes.status}`)
+      }
+      
+      const trendsData = await trendsRes.json()
+      setTrends(trendsData)
+    } catch (error) {
+      console.error('Failed to fetch analytics:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
+      setRefreshing(false)
     }
-  };
+  }, [periodDays])
 
   useEffect(() => {
-    if (authenticated) {
-      loadAllData();
-    }
-  }, [days, authenticated, loadAllData]);
+    fetchAnalytics()
+  }, [periodDays, fetchAnalytics])
 
-  if (!authenticated) {
+  const refresh = () => {
+    setRefreshing(true)
+    fetchAnalytics()
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Admin Analytics Access</CardTitle>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  const chartData = trends?.views?.map((v, index) => ({
+    date: format(new Date(v.date), 'MMM dd'),
+    views: v.count,
+    searches: trends.searches?.[index]?.count || 0,
+    chats: trends.chats?.[index]?.count || 0,
+  })) || []
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Analytics</h1>
+          <p className="text-muted-foreground">Track usage and performance metrics</p>
+        </div>
+        <div className="flex gap-2">
+          <Select value={periodDays} onValueChange={setPeriodDays}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Time period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="14">Last 14 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={refresh} disabled={refreshing} variant="outline">
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* Metric Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Admin Key</label>
-              <Input
-                type="password"
-                value={adminKey}
-                onChange={(e) => setAdminKey(e.target.value)}
-                placeholder="Enter admin access key"
-                onKeyPress={(e) => e.key === 'Enter' && handleAuth()}
-              />
-            </div>
-            {error && (
-              <div className="text-red-600 text-sm">{error}</div>
-            )}
-            <Button 
-              onClick={handleAuth} 
-              disabled={loading} 
-              className="w-full"
-            >
-              {loading ? 'Authenticating...' : 'Access Dashboard'}
-            </Button>
+          <CardContent>
+            <div className="text-2xl font-bold">{overview?.article_metrics.total_views || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {overview?.article_metrics.unique_articles_viewed || 0} unique articles
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Search Activity</CardTitle>
+            <Search className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{overview?.search_metrics.total_searches || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {overview?.search_metrics.unique_queries || 0} unique queries
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Chat Sessions</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{overview?.chat_metrics.total_chats || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {overview?.chat_metrics.unique_sessions || 0} unique sessions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Page Visits</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{overview?.page_visits || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Last {periodDays} days
+            </p>
           </CardContent>
         </Card>
       </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-            <div className="flex items-center gap-4">
-              <select
-                value={days}
-                onChange={(e) => setDays(Number(e.target.value))}
-                className="px-3 py-2 border rounded-md"
-              >
-                <option value={7}>Last 7 days</option>
-                <option value={30}>Last 30 days</option>
-                <option value={90}>Last 90 days</option>
-              </select>
-              <Button 
-                onClick={loadAllData} 
-                disabled={loading}
-                variant="outline"
-              >
-                {loading ? 'Refreshing...' : 'Refresh'}
-              </Button>
-            </div>
-          </div>
+      {/* Tabs for different views */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="content">Content Performance</TabsTrigger>
+          <TabsTrigger value="search">Search Insights</TabsTrigger>
+        </TabsList>
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-              {error}
-            </div>
-          )}
+        <TabsContent value="overview" className="mt-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Popular Articles */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Most Viewed Articles</CardTitle>
+                <CardDescription>Top performing content</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {overview?.popular_articles.slice(0, 5).map((article) => (
+                    <div key={article.id} className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{article.title}</p>
+                        <p className="text-xs text-muted-foreground">{article.slug}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">{article.view_count} views</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Overview Cards */}
-          {dashboardData && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Article Views</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{dashboardData.article_views.total.toLocaleString()}</div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {dashboardData.article_views.unique_articles} unique articles
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Searches</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{dashboardData.searches.total.toLocaleString()}</div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {dashboardData.searches.unique_queries} unique queries
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Chat Sessions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{dashboardData.chats.total.toLocaleString()}</div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {dashboardData.chats.unique_sessions} unique sessions
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Page Visits</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{dashboardData.page_visits.total.toLocaleString()}</div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {dashboardData.page_visits.unique_pages} unique pages
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Top Search Queries */}
-            {searchStats && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Top Search Queries</CardTitle>
-                  <p className="text-sm text-gray-600">
-                    Avg results: {searchStats.avg_results_count.toFixed(1)} per query
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {searchStats.top_queries.map((query, i) => (
-                      <div key={i} className="flex items-center justify-between">
-                        <div className="flex-1 mr-4">
-                          <span className="font-medium">{query.query}</span>
-                          <div className="text-sm text-gray-500">
-                            Avg {query.avg_results.toFixed(1)} results
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Search Queries</CardTitle>
+                <CardDescription>What users are searching for</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {overview?.top_search_queries.slice(0, 5).map((query, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{query.query}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Avg {Math.round(query.avg_results)} results
+                        </p>
+                      </div>
+                      <Badge variant="outline">{query.count} searches</Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="trends" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Activity Trends</CardTitle>
+              <CardDescription>Usage patterns over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="views"
+                      stroke="#8884d8"
+                      name="Article Views"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="searches"
+                      stroke="#82ca9d"
+                      name="Searches"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="chats"
+                      stroke="#ffc658"
+                      name="Chat Sessions"
+                      strokeWidth={2}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="content" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Content Performance</CardTitle>
+              <CardDescription>Article engagement metrics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {overview?.popular_articles.map((article) => (
+                  <div key={article.id} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{article.title}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">{article.slug}</p>
+                      </div>
+                      <Badge>{article.view_count} views</Badge>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-primary h-2 rounded-full"
+                        style={{
+                          width: `${(article.view_count / (overview.popular_articles[0]?.view_count || 1)) * 100}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="search" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Search Analytics</CardTitle>
+              <CardDescription>Search behavior and effectiveness</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="p-4 border rounded-lg">
+                    <p className="text-sm font-medium mb-1">Search Success Rate</p>
+                    <p className="text-2xl font-bold">
+                      {overview?.top_search_queries.filter(q => q.avg_results > 0).length || 0} / {overview?.top_search_queries.length || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Queries with results</p>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <p className="text-sm font-medium mb-1">Avg Results per Search</p>
+                    <p className="text-2xl font-bold">
+                      {Math.round(
+                        (overview?.top_search_queries.reduce((sum, q) => sum + q.avg_results, 0) || 0) /
+                        (overview?.top_search_queries.length || 1)
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Results returned</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-3">Search Query Details</h4>
+                  <div className="space-y-2">
+                    {overview?.top_search_queries.map((query, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium">{query.query}</p>
+                          <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
+                            <span>{query.count} searches</span>
+                            <span>•</span>
+                            <span>{Math.round(query.avg_results)} avg results</span>
                           </div>
                         </div>
-                        <Badge variant="secondary">{query.count}x</Badge>
+                        {query.avg_results === 0 && (
+                          <Badge variant="destructive">No results</Badge>
+                        )}
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Top Chat Questions */}
-            {chatStats && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Top Chat Questions</CardTitle>
-                  {chatStats.avg_response_time_ms && (
-                    <p className="text-sm text-gray-600">
-                      Avg response: {(chatStats.avg_response_time_ms / 1000).toFixed(1)}s
-                    </p>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {chatStats.top_questions.map((question, i) => (
-                      <div key={i} className="flex items-start justify-between">
-                        <div className="flex-1 mr-4">
-                          <span className="font-medium text-sm">{question.question}</span>
-                        </div>
-                        <Badge variant="secondary">{question.count}x</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Top Pages */}
-            {pageVisitStats && (
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Top Pages</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {pageVisitStats.top_pages.map((page, i) => (
-                      <div key={i} className="flex items-center justify-between">
-                        <div className="flex-1 mr-4">
-                          <span className="font-medium">{page.path}</span>
-                          {page.title && (
-                            <div className="text-sm text-gray-500">{page.title}</div>
-                          )}
-                        </div>
-                        <Badge variant="secondary">{page.count} visits</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-      </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
-  );
+  )
 }

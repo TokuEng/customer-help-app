@@ -1,248 +1,408 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api';
-import { WorkSubmissionResponse } from '@/lib/api';
-import { KanbanBoard } from '@/components/KanbanBoard';
-import { LayoutGrid, List, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Search, Clock, CheckCircle, AlertCircle, FileText, Mail, User } from 'lucide-react'
+import { format } from 'date-fns'
+import { getAuthToken } from '@/lib/auth-token'
 
-
-export default function WorkSubmissionsPage() {
-  const [submissions, setSubmissions] = useState<WorkSubmissionResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
-  const [filter, setFilter] = useState<{ status?: string; priority?: string }>({});
-
-  useEffect(() => {
-    loadSubmissions();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
-
-  const loadSubmissions = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getWorkSubmissions({
-        ...filter,
-        limit: 100 // Increased for kanban view
-      });
-      setSubmissions(data);
-    } catch (error) {
-      console.error('Failed to load submissions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateStatus = async (submissionId: string, newStatus: string) => {
-    setUpdating(true);
-    try {
-      const updatedSubmission = await api.updateWorkSubmission(submissionId, {
-        status: newStatus
-      });
-      
-      // Update the local state
-      setSubmissions(prev => 
-        prev.map(sub => 
-          sub.id === submissionId 
-            ? { ...sub, status: newStatus, updated_at: updatedSubmission.updated_at }
-            : sub
-        )
-      );
-    } catch (error) {
-      console.error('Failed to update submission status:', error);
-      // Optionally show a toast notification here
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'bg-red-100 text-red-800';
-      case 'high': return 'bg-orange-100 text-orange-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'pending': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold">Work Submissions</h1>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === 'kanban' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('kanban')}
-              className="gap-2"
-            >
-              <LayoutGrid className="h-4 w-4" />
-              Kanban
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="gap-2"
-            >
-              <List className="h-4 w-4" />
-              List
-            </Button>
-          </div>
-        </div>
-        
-        <div className="flex gap-4 mb-6">
-          {viewMode === 'list' && (
-            <>
-              <select
-                className="px-4 py-2 border rounded-md"
-                value={filter.status || ''}
-                onChange={(e) => setFilter({ ...filter, status: e.target.value || undefined })}
-              >
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="rejected">Rejected</option>
-              </select>
-
-              <select
-                className="px-4 py-2 border rounded-md"
-                value={filter.priority || ''}
-                onChange={(e) => setFilter({ ...filter, priority: e.target.value || undefined })}
-              >
-                <option value="">All Priorities</option>
-                <option value="urgent">Urgent</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
-            </>
-          )}
-
-          <Button
-            variant="outline"
-            onClick={loadSubmissions}
-            disabled={loading}
-            className="gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="flex items-center gap-2 text-gray-500">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
-            <span>Loading submissions...</span>
-          </div>
-        </div>
-      ) : submissions.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center text-gray-500">
-            <div className="mb-4">
-              <LayoutGrid className="h-12 w-12 mx-auto text-gray-300" />
-            </div>
-            <p>No work submissions found.</p>
-          </CardContent>
-        </Card>
-      ) : viewMode === 'kanban' ? (
-        <KanbanBoard
-          submissions={submissions}
-          onUpdateStatus={handleUpdateStatus}
-          isUpdating={updating}
-        />
-      ) : (
-        <div className="space-y-4">
-          {submissions.map((submission) => (
-            <Card key={submission.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="space-y-2">
-                    <CardTitle className="text-xl">{submission.title}</CardTitle>
-                    <div className="flex gap-2 flex-wrap">
-                      <Badge className={getPriorityColor(submission.priority)}>
-                        {submission.priority.toUpperCase()}
-                      </Badge>
-                      <Badge className={getStatusColor(submission.status)}>
-                        {submission.status.replace('_', ' ').toUpperCase()}
-                      </Badge>
-                      <Badge variant="outline">{submission.request_type}</Badge>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-500 text-right">
-                    <div>{formatDate(submission.created_at)}</div>
-                    <div className="font-medium">{submission.submitter_name}</div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 mb-4">{submission.description}</p>
-                
-                <div className="flex justify-between items-center">
-                  <div className="text-sm text-gray-500">
-                    <span className="font-medium">Email:</span> {submission.submitter_email}
-                    {submission.department && (
-                      <span className="ml-4">
-                        <span className="font-medium">Dept:</span> {submission.department}
-                      </span>
-                    )}
-                  </div>
-                  
-                  {submission.tags.length > 0 && (
-                    <div className="flex gap-2">
-                      {submission.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-xs px-2 py-1 bg-gray-100 rounded-full"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                
-                {submission.assigned_to && (
-                  <div className="mt-2 text-sm">
-                    <span className="font-medium">Assigned to:</span> {submission.assigned_to}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+interface WorkSubmission {
+  id: string
+  request_type: string
+  title: string
+  description: string
+  priority: string
+  status: string
+  submitter_name: string
+  submitter_email: string
+  submitter_role: string | null
+  department: string | null
+  tags: string[]
+  attachments: Array<{
+    name?: string;
+    url?: string;
+    type?: string;
+  }>
+  assigned_to: string | null
+  created_at: string
+  updated_at: string
+  completed_at: string | null
 }
 
+export default function WorkSubmissionsAdmin() {
+  const [submissions, setSubmissions] = useState<WorkSubmission[]>([])
+  const [filteredSubmissions, setFilteredSubmissions] = useState<WorkSubmission[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedSubmission, setSelectedSubmission] = useState<WorkSubmission | null>(null)
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [priorityFilter, setPriorityFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const fetchSubmissions = async () => {
+    try {
+      const token = getAuthToken()
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'
+      const response = await fetch(`${apiUrl}/admin/work-submissions?limit=200`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setSubmissions(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch work submissions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filterSubmissions = useCallback(() => {
+    let filtered = [...submissions]
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(s => s.status === statusFilter)
+    }
+
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(s => s.priority === priorityFilter)
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(s => 
+        s.title.toLowerCase().includes(query) ||
+        s.description.toLowerCase().includes(query) ||
+        s.submitter_name.toLowerCase().includes(query) ||
+        s.submitter_email.toLowerCase().includes(query)
+      )
+    }
+
+    setFilteredSubmissions(filtered)
+  }, [submissions, statusFilter, priorityFilter, searchQuery])
+
+  useEffect(() => {
+    fetchSubmissions()
+  }, [])
+
+  useEffect(() => {
+    filterSubmissions()
+  }, [filterSubmissions])
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, { color: string; icon: React.ComponentType<{ className?: string }> | null }> = {
+      pending: { color: 'bg-yellow-500', icon: Clock },
+      in_progress: { color: 'bg-blue-500', icon: AlertCircle },
+      completed: { color: 'bg-green-500', icon: CheckCircle },
+      cancelled: { color: 'bg-gray-500', icon: null }
+    }
+    
+    const variant = variants[status] || { color: 'bg-gray-500', icon: null }
+    
+    return (
+      <Badge className={`${variant.color} text-white`}>
+        {variant.icon && <variant.icon className="h-3 w-3 mr-1" />}
+        {status.replace('_', ' ')}
+      </Badge>
+    )
+  }
+
+  const getPriorityBadge = (priority: string) => {
+    const colors: Record<string, string> = {
+      low: 'bg-gray-100 text-gray-800',
+      medium: 'bg-blue-100 text-blue-800',
+      high: 'bg-orange-100 text-orange-800',
+      urgent: 'bg-red-100 text-red-800'
+    }
+    
+    return (
+      <Badge className={colors[priority] || 'bg-gray-100'}>
+        {priority}
+      </Badge>
+    )
+  }
+
+  const stats = {
+    total: submissions.length,
+    pending: submissions.filter(s => s.status === 'pending').length,
+    inProgress: submissions.filter(s => s.status === 'in_progress').length,
+    completed: submissions.filter(s => s.status === 'completed').length,
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Work Submissions</h1>
+        <p className="text-muted-foreground">Manage and track work requests from users</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pending}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <AlertCircle className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.inProgress}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.completed}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Filters</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by title, description, or submitter..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priority</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Submissions Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Work Requests</CardTitle>
+          <CardDescription>
+            {filteredSubmissions.length} {filteredSubmissions.length === 1 ? 'request' : 'requests'} found
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Submitter</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredSubmissions.map((submission) => (
+                <TableRow key={submission.id}>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{submission.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {submission.description.substring(0, 50)}...
+                      </p>
+                    </div>
+                  </TableCell>
+                  <TableCell>{submission.request_type}</TableCell>
+                  <TableCell>{getStatusBadge(submission.status)}</TableCell>
+                  <TableCell>{getPriorityBadge(submission.priority)}</TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <p>{submission.submitter_name}</p>
+                      <p className="text-muted-foreground">{submission.department || 'N/A'}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {format(new Date(submission.created_at), 'MMM dd, yyyy')}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedSubmission(submission)}
+                    >
+                      View Details
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Details Dialog */}
+      <Dialog open={!!selectedSubmission} onOpenChange={() => setSelectedSubmission(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Work Submission Details</DialogTitle>
+            <DialogDescription>
+              Request ID: {selectedSubmission?.id}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedSubmission && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">{selectedSubmission.title}</h3>
+                <div className="flex gap-2 mb-4">
+                  {getStatusBadge(selectedSubmission.status)}
+                  {getPriorityBadge(selectedSubmission.priority)}
+                  <Badge variant="outline">{selectedSubmission.request_type}</Badge>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Description</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {selectedSubmission.description}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Submitter Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span>{selectedSubmission.submitter_name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span>{selectedSubmission.submitter_email}</span>
+                    </div>
+                    {selectedSubmission.submitter_role && (
+                      <div>Role: {selectedSubmission.submitter_role}</div>
+                    )}
+                    {selectedSubmission.department && (
+                      <div>Department: {selectedSubmission.department}</div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-2">Timeline</h4>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      Created: {format(new Date(selectedSubmission.created_at), 'PPpp')}
+                    </div>
+                    <div>
+                      Updated: {format(new Date(selectedSubmission.updated_at), 'PPpp')}
+                    </div>
+                    {selectedSubmission.completed_at && (
+                      <div>
+                        Completed: {format(new Date(selectedSubmission.completed_at), 'PPpp')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {selectedSubmission.tags.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Tags</h4>
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedSubmission.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary">{tag}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
