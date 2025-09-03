@@ -3,8 +3,8 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json ./
-RUN npm ci || npm install
+COPY package.json ./
+RUN npm install --frozen-lockfile || npm install
 
 # Copy app files
 COPY . .
