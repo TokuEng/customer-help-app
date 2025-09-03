@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+import os
 
 class Settings(BaseSettings):
     # Database
@@ -24,6 +25,9 @@ class Settings(BaseSettings):
     # API Settings
     api_prefix: str = "/api"
     cors_origins: list[str] = ["*"]
+    
+    # Admin access for analytics dashboard
+    admin_key: str = os.getenv("ADMIN_KEY", "admin_access_token_2024")
     
     # DigitalOcean Spaces (for permanent image storage)
     spaces_key: Optional[str] = None

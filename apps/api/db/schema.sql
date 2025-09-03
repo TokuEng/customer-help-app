@@ -53,6 +53,41 @@ create table article_views (
   viewed_at timestamptz default now()
 );
 
+-- Search queries tracking table
+create table search_queries (
+  id bigserial primary key,
+  query text not null,
+  filters jsonb,                           -- Search filters applied (category, type, etc.)
+  results_count int default 0,             -- Number of results returned
+  ip_address inet,
+  user_agent text,
+  searched_at timestamptz default now()
+);
+
+-- Chat interactions tracking table
+create table chat_interactions (
+  id bigserial primary key,
+  session_id text,                         -- Chat session identifier
+  user_message text not null,              -- User's question/message
+  assistant_response text,                 -- AI assistant's response
+  contexts_used jsonb,                     -- RAG contexts used for response
+  response_time_ms int,                    -- Response time in milliseconds
+  ip_address inet,
+  user_agent text,
+  created_at timestamptz default now()
+);
+
+-- Page visits tracking table (for non-article pages)
+create table page_visits (
+  id bigserial primary key,
+  page_path text not null,                 -- Page path (/search, /calendar, /, etc.)
+  page_title text,                         -- Page title
+  referrer text,                           -- Referring page/source
+  ip_address inet,
+  user_agent text,
+  visited_at timestamptz default now()
+);
+
 -- Work submissions table
 create table work_submissions (
   id uuid primary key default gen_random_uuid(),
@@ -104,6 +139,14 @@ create index idx_chunks_article_id on chunks(article_id);
 create index idx_chunks_embedding on chunks using ivfflat (embedding vector_cosine_ops);
 create index idx_article_views_article_id on article_views(article_id);
 create index idx_article_views_viewed_at on article_views(viewed_at desc);
+
+-- Analytics indexes
+create index idx_search_queries_searched_at on search_queries(searched_at desc);
+create index idx_search_queries_query on search_queries(query);
+create index idx_chat_interactions_created_at on chat_interactions(created_at desc);
+create index idx_chat_interactions_session_id on chat_interactions(session_id);
+create index idx_page_visits_visited_at on page_visits(visited_at desc);
+create index idx_page_visits_page_path on page_visits(page_path);
 
 -- Work submissions indexes
 create index idx_work_submissions_status on work_submissions(status);

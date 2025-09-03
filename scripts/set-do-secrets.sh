@@ -80,3 +80,4 @@ echo -e "${GREEN}Secret configuration complete!${NC}"
 echo
 echo "Note: The app will restart automatically to apply the new secrets."
 echo "Check deployment status at: https://cloud.digitalocean.com/apps/$APP_ID"
+

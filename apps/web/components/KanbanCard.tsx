@@ -110,3 +110,4 @@ export function KanbanCard({ submission, isDragging = false }: KanbanCardProps) 
     </motion.div>
   );
 }
+
