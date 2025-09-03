@@ -20,7 +20,7 @@ export default async function HomePage() {
       };
     });
   } catch {
-    // Fall back to default data if API fails
+    // Fall back to default data with 0 counts if API fails
     categoriesWithCounts = categoryData;
   }
 
