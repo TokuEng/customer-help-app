@@ -19,7 +19,9 @@ export default async function HomePage() {
         count: realCount?.count || 0
       };
     });
-  } catch {
+  } catch (error) {
+    // Log the error for debugging in production
+    console.error('Failed to fetch category counts:', error);
     // Fall back to default data with 0 counts if API fails
     categoriesWithCounts = categoryData;
   }

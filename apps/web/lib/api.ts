@@ -1,18 +1,22 @@
 // Get the base URL for API calls
 function getApiBaseUrl() {
-  // Use environment variable if available
-  const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+  // For server-side rendering, check BACKEND_URL first
+  if (typeof window === 'undefined') {
+    const backendUrl = process.env.BACKEND_URL;
+    if (backendUrl && backendUrl !== '') {
+      return `${backendUrl}/api`;
+    }
+    // Fallback to internal service communication
+    return 'http://api:8080/api';
+  }
   
+  // For client-side, use NEXT_PUBLIC_API_URL if available
+  const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
   if (envApiUrl && envApiUrl !== '') {
     return envApiUrl;
   }
   
-  // For server-side rendering, use internal service communication
-  if (typeof window === 'undefined') {
-    return 'http://api:8080/api';
-  }
-  
-  // For client-side, use the backend route consistently
+  // Fallback for client-side
   return '/backend/api';
 }
 
