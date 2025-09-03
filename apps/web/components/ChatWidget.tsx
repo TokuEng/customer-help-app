@@ -11,6 +11,12 @@ import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 import { ChatTracker } from '@/components/ChatTracker';
 
+// Type for message parts
+interface MessagePart {
+  type: string;
+  text?: string;
+}
+
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -24,13 +30,27 @@ export default function ChatWidget() {
       // Track the completed chat interaction
       if (messages.length > 0) {
         const lastUserMessage = messages[messages.length - 1];
-        if (lastUserMessage?.role === 'user' && lastUserMessage?.content) {
-          ChatTracker.trackChatComplete(
-            lastUserMessage.content.toString(),
-            message.content || '',
-            Date.now() - 2000, // Rough estimate for response time
-            [] // We could pass RAG contexts here if available
-          );
+        if (lastUserMessage?.role === 'user') {
+          // Extract text content from the user message parts
+          const userContent = lastUserMessage.parts
+            ?.filter((part: MessagePart) => part.type === 'text')
+            .map((part: MessagePart) => part.text)
+            .join('') || '';
+          
+          // Extract text content from the assistant message parts
+          const assistantContent = message.message.parts
+            ?.filter((part: MessagePart) => part.type === 'text')
+            .map((part: MessagePart) => part.text)
+            .join('') || '';
+          
+          if (userContent) {
+            ChatTracker.trackChatComplete(
+              userContent,
+              assistantContent,
+              Date.now() - 2000, // Rough estimate for response time
+              [] // We could pass RAG contexts here if available
+            );
+          }
         }
       }
     }
