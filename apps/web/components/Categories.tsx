@@ -46,13 +46,13 @@ export default function Categories({ items }: { items: CategoryItem[] }) {
   );
 }
 
-// Default category data with counts
+// Default category data with fallback counts
 export const categoryData = [
   {
     name: 'Library',
     slug: 'library',
     icon: <Book className="h-5 w-5" />,
-    count: 42,
+    count: 0,
     color: 'text-indigo-600',
     bgColor: 'bg-indigo-50',
   },
@@ -60,7 +60,7 @@ export const categoryData = [
     name: 'Token Payroll',
     slug: 'token-payroll',
     icon: <Coins className="h-5 w-5" />,
-    count: 28,
+    count: 0,
     color: 'text-teal-600',
     bgColor: 'bg-teal-50',
   },
@@ -68,7 +68,7 @@ export const categoryData = [
     name: 'Benefits',
     slug: 'benefits',
     icon: <Heart className="h-5 w-5" />,
-    count: 35,
+    count: 0,
     color: 'text-pink-600',
     bgColor: 'bg-pink-50',
   },
@@ -76,7 +76,7 @@ export const categoryData = [
     name: 'Policy',
     slug: 'policy',
     icon: <Shield className="h-5 w-5" />,
-    count: 19,
+    count: 0,
     color: 'text-purple-600',
     bgColor: 'bg-purple-50',
   },
