@@ -17,7 +17,7 @@ function getApiBaseUrl() {
   }
   
   // Fallback for client-side
-  return '/api';
+  return '/backend/api';
 }
 
 export interface SearchResult {
