@@ -75,7 +75,9 @@ GUIDELINES:
 6. **Performance**: Generate clean, minimal HTML without unnecessary elements
 
 FORMATTING RULES:
-- Convert markdown headers to proper HTML headings with IDs for linking
+- DO NOT create H1 headings - the article title is already displayed separately
+- Start with H2 headings as the highest level for content sections
+- Convert markdown headers to proper HTML headings with IDs for linking (H2-H6 only)
 - Transform lists into well-structured <ul>/<ol> with proper nesting
 - Add semantic emphasis (<strong>, <em>) where appropriate
 - Create proper code blocks with syntax highlighting hints
@@ -120,12 +122,15 @@ CONTENT TYPE SPECIFIC FORMATTING:
 - **Benefits/Country lists**: Structure as organized navigation with regional groupings and clear visual separation
 
 SPECIAL INSTRUCTIONS FOR THIS CONTENT:
+- NEVER create an H1 heading - the article title is already shown in the page header
+- Start content sections with H2 headings as the top level
 - If the content contains many markdown links in list format, organize them into a clean navigation structure
 - Group related items under appropriate headings (e.g., by region, category, or type)
 - Use proper HTML list structures (<ul>, <li>) for link collections
 - Ensure links are properly formatted and accessible
 - Create clear visual hierarchy with headings and spacing
 - If content appears to be a navigation index, format it as such with proper sections
+- Remove any duplicate title information that matches the article title
 
 Focus on making the content scannable, well-organized, and easy to navigate."""
 
@@ -139,6 +144,10 @@ Focus on making the content scannable, well-organized, and easy to navigate."""
         # Remove any markdown code block wrappers if AI included them
         html = re.sub(r'^```html\s*\n?', '', html, flags=re.MULTILINE)
         html = re.sub(r'\n?```\s*$', '', html, flags=re.MULTILINE)
+        
+        # Remove any H1 tags - convert them to H2 to avoid duplicate titles
+        html = re.sub(r'<h1([^>]*)>', r'<h2\1>', html, flags=re.IGNORECASE)
+        html = re.sub(r'</h1>', '</h2>', html, flags=re.IGNORECASE)
         
         # Ensure proper heading IDs for navigation
         html = self._add_heading_ids(html)
