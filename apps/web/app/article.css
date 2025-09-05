@@ -342,3 +342,69 @@
   opacity: 0.3;
   font-family: serif;
 }
+
+/* Navigation and index page styling */
+.article-content .nav-section {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.article-content .nav-section h2,
+.article-content .nav-section h3 {
+  margin-top: 0;
+  color: var(--toku);
+  border-bottom: 2px solid var(--toku-200);
+  padding-bottom: 0.5rem;
+}
+
+.article-content .nav-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.article-content .nav-link {
+  display: block;
+  padding: 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.article-content .nav-link:hover {
+  border-color: var(--toku);
+  box-shadow: 0 4px 12px rgba(31, 90, 224, 0.15);
+  transform: translateY(-2px);
+}
+
+.article-content .nav-link h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--toku);
+  font-size: 1.1rem;
+}
+
+.article-content .nav-link p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Country/region groupings */
+.article-content .region-group {
+  margin: 2rem 0;
+  padding: 1rem;
+  border-left: 4px solid var(--toku-200);
+  background: rgba(31, 90, 224, 0.02);
+}
+
+.article-content .region-group h3 {
+  margin-top: 0;
+  color: var(--toku-700);
+}

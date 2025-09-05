@@ -84,6 +84,12 @@ FORMATTING RULES:
 - Insert visual breaks and sections where content flow suggests it
 - Generate proper image tags with alt text and responsive classes
 
+SPECIAL CONTENT HANDLING:
+- **Navigation/Index Pages**: If content contains many links in list format, create a structured navigation with proper sections and categories
+- **Link Lists**: Transform markdown link lists into organized HTML navigation with clear visual hierarchy
+- **Country/Region Lists**: Group related items under clear headings with proper nesting
+- **Mixed Content**: If content mixes headers, links, and text, create clear sections with appropriate spacing
+
 CALLOUT CLASSES AVAILABLE:
 - callout-info: Blue background for general information
 - callout-warning: Yellow background for warnings/cautions
@@ -104,12 +110,24 @@ CONTENT TO RENDER:
 {content_md}
 
 Please transform this markdown content into optimal HTML structure. Analyze the content type and apply appropriate formatting:
-- For how-to guides: Use numbered steps, clear sections, and highlight important actions
-- For policies: Use clear sections, emphasis on key points, and structured lists
-- For FAQs: Use question-answer format with clear visual separation
-- For processes: Use step-by-step structure with visual flow indicators
 
-Focus on making the content scannable and easy to follow."""
+CONTENT TYPE SPECIFIC FORMATTING:
+- **How-to guides**: Use numbered steps, clear sections, and highlight important actions
+- **Policies**: Use clear sections, emphasis on key points, and structured lists  
+- **FAQs**: Use question-answer format with clear visual separation
+- **Processes**: Use step-by-step structure with visual flow indicators
+- **Navigation/Index pages**: Create organized sections with proper heading hierarchy, group related links under clear categories
+- **Benefits/Country lists**: Structure as organized navigation with regional groupings and clear visual separation
+
+SPECIAL INSTRUCTIONS FOR THIS CONTENT:
+- If the content contains many markdown links in list format, organize them into a clean navigation structure
+- Group related items under appropriate headings (e.g., by region, category, or type)
+- Use proper HTML list structures (<ul>, <li>) for link collections
+- Ensure links are properly formatted and accessible
+- Create clear visual hierarchy with headings and spacing
+- If content appears to be a navigation index, format it as such with proper sections
+
+Focus on making the content scannable, well-organized, and easy to navigate."""
 
         return context
     
