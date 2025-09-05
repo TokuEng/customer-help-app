@@ -20,7 +20,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL
-        value: ${APP_URL}/backend/api
+        value: https://customer-help-center-ouv8b.ondigitalocean.app/backend/api
       - key: BACKEND_URL
         value: http://api:8080
       - key: REVALIDATE_TOKEN
@@ -48,7 +48,7 @@ services:
     instance_size_slug: basic-xs
     envs:
       - key: DATABASE_URL
-        value: ${customer-help-db.DATABASE_URL}
+        value: ${db.DATABASE_URL}
       - key: MEILI_HOST
         value: http://147.182.245.91:7700
       - key: MEILI_MASTER_KEY
@@ -68,7 +68,7 @@ services:
         type: SECRET
         value: ${REVALIDATE_TOKEN}
       - key: WEB_BASE_URL
-        value: ${APP_URL}
+        value: https://customer-help-center-ouv8b.ondigitalocean.app
       - key: SPACES_KEY
         type: SECRET
         value: ${SPACES_KEY}
