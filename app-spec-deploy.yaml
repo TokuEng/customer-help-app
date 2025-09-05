@@ -85,7 +85,7 @@ services:
         type: SECRET
         value: ${ADMIN_KEY}
     routes:
-      - path: /api
+      - path: /backend/api
 
 databases:
   - cluster_name: customer-help-db

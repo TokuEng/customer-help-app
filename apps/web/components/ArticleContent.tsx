@@ -17,7 +17,9 @@ export function ArticleContent({ content, articleId, className = '' }: ArticleCo
   const pollRenderStatus = useCallback(async (renderId: string) => {
     const poll = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/render/${renderId}/status`);
+        // Use proper API URL with fallback
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/backend/api';
+        const response = await fetch(`${apiUrl}/render/${renderId}/status`);
         const status = await response.json();
         
         setRenderProgress(status.progress);
@@ -46,7 +48,8 @@ export function ArticleContent({ content, articleId, className = '' }: ArticleCo
       setRenderProgress(10);
 
       // Trigger AI rendering
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/render`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/backend/api';
+      const response = await fetch(`${apiUrl}/render`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
