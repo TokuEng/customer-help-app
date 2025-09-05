@@ -34,35 +34,35 @@ services:
     http_port: 8080
     instance_count: 1
     instance_size_slug: basic-xs
-    # envs:
-    #   - key: DATABASE_URL
-    #     value: ${customer-help-db.DATABASE_URL}
-    #   - key: MEILI_HOST
-    #     type: SECRET
-    #   - key: MEILI_MASTER_KEY
-    #     type: SECRET
-    #   - key: NOTION_TOKEN
-    #     type: SECRET
-    #   - key: NOTION_INDEX_PAGE_ID
-    #     type: SECRET
-    #   - key: EMBEDDINGS_PROVIDER
-    #     value: openai
-    #   - key: OPENAI_API_KEY
-    #     type: SECRET
-    #   - key: REVALIDATE_TOKEN
-    #     type: SECRET
-    #   - key: WEB_BASE_URL
-    #     value: ${APP_URL}
-    #   - key: SPACES_KEY
-    #     type: SECRET
-    #   - key: SPACES_SECRET
-    #     type: SECRET
-    #   - key: SPACES_BUCKET
-    #     type: SECRET
-    #   - key: SPACES_REGION
-    #     value: sfo3
-    #   - key: SPACES_CDN_ENDPOINT
-    #     type: SECRET
+    envs:
+      - key: DATABASE_URL
+        value: ${customer-help-db.DATABASE_URL}
+      - key: MEILI_HOST
+        type: SECRET
+      - key: MEILI_MASTER_KEY
+        type: SECRET
+      - key: NOTION_TOKEN
+        type: SECRET
+      - key: NOTION_INDEX_PAGE_ID
+        type: SECRET
+      - key: EMBEDDINGS_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        type: SECRET
+      - key: REVALIDATE_TOKEN
+        type: SECRET
+      - key: WEB_BASE_URL
+        value: ${APP_URL}
+      - key: SPACES_KEY
+        type: SECRET
+      - key: SPACES_SECRET
+        type: SECRET
+      - key: SPACES_BUCKET
+        type: SECRET
+      - key: SPACES_REGION
+        value: sfo3
+      - key: SPACES_CDN_ENDPOINT
+        type: SECRET
     routes:
       - path: /backend
 
