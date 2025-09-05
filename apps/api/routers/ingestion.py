@@ -57,8 +57,13 @@ async def run_ingestion_task(force_full_sync: bool = False, specific_page_ids: O
         notion_service = NotionService()
         indexer_service = IndexerService()
         
-        # Create database connection pool
-        db_pool = await asyncpg.create_pool(settings.database_url, min_size=5, max_size=10)
+        # Create database connection pool with conservative limits
+        db_pool = await asyncpg.create_pool(
+            settings.database_url, 
+            min_size=2, 
+            max_size=4,  # Lower limit for background ingestion
+            command_timeout=60  # Longer timeout for ingestion operations
+        )
         
         # Create ingestion log entry
         try:

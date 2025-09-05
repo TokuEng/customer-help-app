@@ -23,8 +23,18 @@ async def lifespan(app: FastAPI):
     logger.info(f"Database URL: {settings.database_url[:50]}...")
     
     try:
-        db_pool = await asyncpg.create_pool(settings.database_url)
-        logger.info("Database pool created successfully")
+        # Configure connection pool with proper limits for production
+        db_pool = await asyncpg.create_pool(
+            settings.database_url,
+            min_size=2,        # Minimum connections to keep open
+            max_size=5,        # Maximum connections (conservative for shared DB)
+            command_timeout=30, # Command timeout in seconds
+            server_settings={
+                'jit': 'off',   # Disable JIT for better connection stability
+                'application_name': 'customer_help_center_api'
+            }
+        )
+        logger.info("Database pool created successfully with 2-5 connections")
         
         # Test the connection
         async with db_pool.acquire() as conn:
