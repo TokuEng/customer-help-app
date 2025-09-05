@@ -51,3 +51,5 @@ SELECT
 FROM ingestion_logs
 GROUP BY DATE(started_at)
 ORDER BY date DESC;
+
+

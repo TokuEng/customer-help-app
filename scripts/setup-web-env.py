@@ -68,3 +68,5 @@ print("\n📝 Next steps:")
 print("1. Ensure REVALIDATE_TOKEN matches between API and Web .env files")
 print("2. Run 'npm run dev' in the web directory")
 print("3. Access admin panel at http://localhost:3000/admin")
+
+

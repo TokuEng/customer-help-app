@@ -9,6 +9,7 @@ create table articles (
   summary text,
   content_md text,
   content_html text,
+  ai_rendered_html text,              -- AI-optimized HTML content
   reading_time_min int,
   type text,                 -- how-to | guide | policy | faq | process | info
   category text,             -- Library | Token Payroll | Benefits | Policy

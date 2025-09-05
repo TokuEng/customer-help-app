@@ -128,3 +128,5 @@ if __name__ == "__main__":
         os.environ['USE_API_TRIGGER'] = 'false'  # Run directly in scheduled job
     
     asyncio.run(main())
+
+

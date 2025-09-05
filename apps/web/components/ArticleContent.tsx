@@ -1,17 +1,93 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { LoadingProgress } from './LoadingProgress';
 
 interface ArticleContentProps {
   content: string;
+  articleId: string;
   className?: string;
 }
 
-export function ArticleContent({ content, className = '' }: ArticleContentProps) {
+export function ArticleContent({ content, articleId, className = '' }: ArticleContentProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isAIRendering, setIsAIRendering] = useState(false);
+  const [renderProgress, setRenderProgress] = useState(0);
+
+  const pollRenderStatus = useCallback(async (renderId: string) => {
+    const poll = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/render/${renderId}/status`);
+        const status = await response.json();
+        
+        setRenderProgress(status.progress);
+        
+        if (status.status === 'completed') {
+          // Refresh the page to get the new AI-rendered content
+          window.location.reload();
+        } else if (status.status === 'failed') {
+          setIsAIRendering(false);
+        } else {
+          // Continue polling
+          setTimeout(poll, 1000);
+        }
+      } catch (error) {
+        console.error('Failed to poll render status:', error);
+        setIsAIRendering(false);
+      }
+    };
+    
+    poll();
+  }, []);
+
+  const triggerAIRender = useCallback(async () => {
+    try {
+      setIsAIRendering(true);
+      setRenderProgress(10);
+
+      // Trigger AI rendering
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/render`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          article_id: articleId,
+          force_rerender: false
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.render_id) {
+        // Poll for progress
+        pollRenderStatus(result.render_id);
+      } else {
+        setIsAIRendering(false);
+      }
+    } catch (error) {
+      console.error('Failed to trigger AI render:', error);
+      setIsAIRendering(false);
+    }
+  }, [articleId, pollRenderStatus]);
+
+  // Check if AI rendering should be triggered
+  useEffect(() => {
+    const shouldTriggerAIRender = () => {
+      // Trigger AI render if content looks like basic HTML/markdown
+      const hasBasicFormatting = content.includes('##') || 
+                                 content.includes('**') || 
+                                 (!content.includes('<div class="callout') && 
+                                  !content.includes('<section'));
+      
+      return hasBasicFormatting && content.length > 500; // Only for substantial content
+    };
+
+    if (shouldTriggerAIRender()) {
+      triggerAIRender();
+    }
+  }, [articleId, content, triggerAIRender]);
 
   useEffect(() => {
-    if (contentRef.current) {
+    if (contentRef.current && !isAIRendering) {
       const container = contentRef.current;
 
       const isInCode = (el: Element) => !!el.closest('pre, code');
@@ -103,7 +179,40 @@ export function ArticleContent({ content, className = '' }: ArticleContentProps)
         };
       });
     }
-  }, [content]);
+  }, [content, isAIRendering]);
+
+  if (isAIRendering) {
+    return (
+      <div className={`article-content prose prose-lg prose-gray max-w-none ${className}`}>
+        <div className="my-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+          <div className="text-center space-y-4">
+            <div className="inline-flex items-center space-x-2 text-blue-700">
+              <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span className="font-medium">AI is optimizing this article for better readability...</span>
+            </div>
+            <LoadingProgress 
+              className="max-w-md mx-auto"
+              message={`Enhancing content structure and formatting (${renderProgress}%)`}
+              showMessage={true}
+            />
+            <p className="text-sm text-blue-600">
+              This will only take a moment. The AI is analyzing the content and applying smart formatting for the best reading experience.
+            </p>
+          </div>
+        </div>
+        
+        {/* Show original content below the loading indicator */}
+        <div 
+          ref={contentRef}
+          className="opacity-75"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div 

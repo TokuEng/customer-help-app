@@ -37,7 +37,7 @@ async def get_article(request: Request, slug: str):
         # Get article
         article = await conn.fetchrow(
             """
-            SELECT id, slug, title, summary, content_html, reading_time_min,
+            SELECT id, slug, title, summary, content_html, ai_rendered_html, reading_time_min,
                    type, category, tags, persona, updated_at
             FROM articles
             WHERE slug = $1 AND visibility = 'public'
@@ -52,12 +52,15 @@ async def get_article(request: Request, slug: str):
         chunking_service = ChunkingService()
         toc = chunking_service.extract_headings_from_html(article['content_html'])
         
+        # Use AI-rendered content if available, otherwise fall back to regular content
+        content_to_use = article['ai_rendered_html'] or article['content_html']
+        
         return Article(
             id=str(article['id']),
             slug=article['slug'],
             title=article['title'],
             summary=article['summary'],
-            content_html=article['content_html'],
+            content_html=content_to_use,
             reading_time_min=article['reading_time_min'],
             type=article['type'],
             category=article['category'],

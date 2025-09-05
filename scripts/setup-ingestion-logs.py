@@ -104,3 +104,5 @@ if __name__ == "__main__":
     print("1. The ingestion system will now log all activities")
     print("2. Access the admin panel at: /admin/ingestion")
     print("3. Use the monitoring script: python scripts/monitor-auto-ingestion.py")
+
+

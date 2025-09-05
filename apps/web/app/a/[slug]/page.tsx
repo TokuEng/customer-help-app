@@ -85,7 +85,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
                 {/* Content */}
                 <div className="prose prose-base sm:prose-lg prose-brand max-w-none">
-                  <ArticleContent content={article.content_html} />
+                  <ArticleContent content={article.content_html} articleId={article.id} />
                 </div>
 
                 {/* Feedback */}
