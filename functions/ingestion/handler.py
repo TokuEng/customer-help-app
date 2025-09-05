@@ -68,8 +68,9 @@ async def sync_notion_content():
                 # Fetch page details
                 page_detail = await notion_service.fetch_page_detail(page_info['page_id'])
                 
-                # Check if page needs update
-                if last_synced and page_detail['last_edited_time'] <= last_synced:
+                # Check if page needs update (unless forcing full sync)
+                force_sync = os.getenv('FORCE_FULL_SYNC', 'false').lower() == 'true'
+                if not force_sync and last_synced and page_detail['last_edited_time'] <= last_synced:
                     print(f"Skipping unchanged page: {page_detail['title']}")
                     return None
                 

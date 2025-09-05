@@ -64,3 +64,5 @@ else
     echo "❌ Failed to set admin key"
     exit 1
 fi
+
+
