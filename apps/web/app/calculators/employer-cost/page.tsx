@@ -164,7 +164,7 @@ export default function EmployerCostPage() {
               />
             </div>
             
-            <div className="flex items-end sm:col-span-2 lg:col-span-1">
+            <div className="flex items-start sm:col-span-2 lg:col-span-1">
               <Button
                 onClick={genEmail}
                 disabled={isGenerating}
