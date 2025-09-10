@@ -1,5 +1,5 @@
 import ImportantDatesCalendar from '@/components/ImportantDatesCalendar';
-import { Calendar } from 'lucide-react';
+import { Calendar, AlertTriangle } from 'lucide-react';
 
 export default function CalendarPage() {
   return (
@@ -17,6 +17,26 @@ export default function CalendarPage() {
             <p className="mt-3 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
               Stay on top of important payment dates and deadlines for smooth contractor operations
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Important Warning */}
+      <div className="mx-auto max-w-6xl px-4 md:px-8 pb-6">
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 sm:p-6">
+          <div className="flex gap-3">
+            <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold text-amber-800 mb-2">
+                Critical Payment Timeline
+              </h3>
+              <p className="text-sm sm:text-base text-amber-800 leading-relaxed">
+                <strong>Important:</strong> To ensure you&apos;re paid by the last working day of the month, 
+                contractors must submit their invoice by no later than the <strong>19th of the month</strong>. 
+                Admins must approve these invoices no later than the <strong>21st of the month</strong>. 
+                Delays in submission can result in delayed payments by ~10 business days.
+              </p>
+            </div>
           </div>
         </div>
       </div>

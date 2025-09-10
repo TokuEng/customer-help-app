@@ -44,7 +44,7 @@ export function Header() {
               className="text-sm sm:text-base lg:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-2 sm:px-3 py-2"
             >
               <span className="hidden sm:inline">Cost Calculator</span>
-              <span className="sm:hidden">Calculator</span>
+              <span className="sm:hidden">Cost Calc</span>
             </Link>
             <Link
               href="/calculators/prorated"
