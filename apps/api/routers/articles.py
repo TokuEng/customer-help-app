@@ -52,8 +52,9 @@ async def get_article(request: Request, slug: str):
         chunking_service = ChunkingService()
         toc = chunking_service.extract_headings_from_html(article['content_html'])
         
-        # Use AI-rendered content if available, otherwise fall back to regular content
-        content_to_use = article['ai_rendered_html'] or article['content_html']
+        # Temporarily use original content (AI rendering commented out)
+        # content_to_use = article['ai_rendered_html'] or article['content_html']
+        content_to_use = article['content_html']
         
         return Article(
             id=str(article['id']),

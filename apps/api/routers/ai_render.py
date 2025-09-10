@@ -28,16 +28,17 @@ class RenderStatus(BaseModel):
 # In-memory store for render progress (in production, use Redis)
 render_progress = {}
 
-@router.post("/render", response_model=RenderResponse)
-async def trigger_ai_render(
-    request: Request, 
-    body: RenderRequest,
-    background_tasks: BackgroundTasks
-):
-    """
-    Trigger AI rendering for an article
-    Returns immediately with render_id for progress tracking
-    """
+# Temporarily commented out - using original content rendering
+# @router.post("/render", response_model=RenderResponse)
+# async def trigger_ai_render(
+#     request: Request, 
+#     body: RenderRequest,
+#     background_tasks: BackgroundTasks
+# ):
+#     """
+#     Trigger AI rendering for an article
+#     Returns immediately with render_id for progress tracking
+#     """
     db_pool = request.app.state.db_pool()
     
     async with db_pool.acquire() as conn:
@@ -164,17 +165,17 @@ async def render_article_background(render_id: str, article_data: dict, db_pool)
             "message": f"AI rendering failed: {str(e)}"
         })
 
-@router.post("/render/batch")
-async def trigger_batch_render(
-    request: Request,
-    background_tasks: BackgroundTasks,
-    category: Optional[str] = None,
-    article_type: Optional[str] = None,
-    force_rerender: bool = False
-):
-    """
-    Trigger AI rendering for multiple articles based on filters
-    """
+# @router.post("/render/batch")
+# async def trigger_batch_render(
+#     request: Request,
+#     background_tasks: BackgroundTasks,
+#     category: Optional[str] = None,
+#     article_type: Optional[str] = None,
+#     force_rerender: bool = False
+# ):
+#     """
+#     Trigger AI rendering for multiple articles based on filters
+#     """
     db_pool = request.app.state.db_pool()
     
     # Build query based on filters
