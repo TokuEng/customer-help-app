@@ -1,36 +1,50 @@
 #!/usr/bin/env python3
 """
-Run Notion ingestion locally
+Run Notion ingestion locally via API trigger
 """
-import subprocess
+import requests
 import sys
 import os
+from dotenv import load_dotenv
 
-# Change to project root
+# Load environment variables
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.chdir(project_root)
-
-print("🔄 Running Notion ingestion...")
-print(f"📁 Project root: {project_root}")
-
-# Check if .env file exists
 env_path = os.path.join(project_root, 'apps', 'api', '.env')
+
 if not os.path.exists(env_path):
     print("❌ Error: No .env file found at apps/api/.env")
     print("   Please copy apps/api/env.template to apps/api/.env and fill in your values")
     sys.exit(1)
 
-# Set PYTHONPATH to include project root
-env = os.environ.copy()
-env['PYTHONPATH'] = project_root
+load_dotenv(env_path)
 
-# Run the ingestion handler
-result = subprocess.run([
-    sys.executable, 
-    'functions/ingestion/handler.py'
-], env=env)
+print("🔄 Triggering Notion ingestion via API...")
+print(f"📁 Project root: {project_root}")
 
-if result.returncode == 0:
-    print("✅ Ingestion completed successfully!")
-else:
-    print("❌ Ingestion failed with error code:", result.returncode)
+# Get required environment variables
+api_url = os.getenv('API_URL', 'http://localhost:8080')
+revalidate_token = os.getenv('REVALIDATE_TOKEN')
+
+if not revalidate_token:
+    print("❌ Error: REVALIDATE_TOKEN not found in .env file")
+    sys.exit(1)
+
+try:
+    response = requests.post(
+        f"{api_url}/api/ingestion/trigger",
+        json={"force_full_sync": False},
+        headers={"Authorization": f"Bearer {revalidate_token}"},
+        timeout=30.0
+    )
+    
+    if response.status_code == 200:
+        data = response.json()
+        print(f"✅ Ingestion triggered successfully: {data['message']}")
+        print("📝 Check ingestion status with: python scripts/test-ingestion-api.py")
+    else:
+        print(f"❌ Failed to trigger ingestion: {response.status_code} - {response.text}")
+        sys.exit(1)
+        
+except Exception as e:
+    print(f"❌ Error triggering ingestion: {e}")
+    sys.exit(1)
