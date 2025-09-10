@@ -115,7 +115,7 @@ export default function ProratedCalculatorPage() {
 
         {/* Input Section */}
         <Card className="p-4 sm:p-6 mb-6 sm:mb-8">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-3 lg:items-end">
             <div className="space-y-2">
               <label htmlFor="startDate" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4 text-gray-500" />
@@ -153,11 +153,11 @@ export default function ProratedCalculatorPage() {
               <div className="h-4"></div>
             </div>
             
-            <div className="flex items-end sm:col-span-2 lg:col-span-1">
+            <div className="lg:mb-4">
               <Button
                 onClick={handleCalculate}
                 disabled={!startDate || monthlyCompensation <= 0}
-                className="w-full sm:w-auto h-11 sm:h-10"
+                className="w-full h-11 sm:h-10"
               >
                 <Calculator className="mr-2 h-4 w-4" />
                 Calculate Prorated Amount
