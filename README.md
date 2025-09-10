@@ -7,7 +7,7 @@
 ```mermaid
 graph TB
     subgraph "Content Management"
-        N[Notion Knowledge Base] --> IF[Ingestion Function<br/>DigitalOcean Functions]
+        N[Notion Knowledge Base] --> IF[Manual Ingestion<br/>API Triggers]
     end
     
     subgraph "Data Layer"

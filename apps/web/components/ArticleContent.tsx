@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { LoadingProgress } from './LoadingProgress';
+import ReactMarkdown from 'react-markdown';
 
 interface ArticleContentProps {
   content: string;
@@ -13,6 +14,7 @@ export function ArticleContent({ content, articleId, className = '' }: ArticleCo
   const contentRef = useRef<HTMLDivElement>(null);
   const [isAIRendering, setIsAIRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
+  const [markdownContent, setMarkdownContent] = useState<string | null>(null);
 
   const pollRenderStatus = useCallback(async (renderId: string) => {
     const poll = async () => {
@@ -88,6 +90,25 @@ export function ArticleContent({ content, articleId, className = '' }: ArticleCo
       triggerAIRender();
     }
   }, [articleId, content, triggerAIRender]);
+
+  // Detect if the provided HTML actually contains raw markdown inside text nodes
+  useEffect(() => {
+    try {
+      const temp = document.createElement('div');
+      temp.innerHTML = content || '';
+      const plainText = temp.textContent || '';
+
+      const looksLikeMarkdown = /(^|\n)\s{0,3}(#{1,6})\s+.+|\!\[[^\]]*\]\([^\)]+\)|\[[^\]]+\]\([^\)]+\)|(^|\n)\s*\d+\.\s+/.test(plainText);
+
+      // If lots of HTML tags are present, prefer HTML; otherwise if markdown patterns are present, render via markdown
+      const htmlTagCount = (content.match(/<[^>]+>/g) || []).length;
+      const preferMarkdown = looksLikeMarkdown && htmlTagCount < 10; // heuristics: light HTML wrapper around markdown
+
+      setMarkdownContent(preferMarkdown ? plainText : null);
+    } catch {
+      setMarkdownContent(null);
+    }
+  }, [content]);
 
   useEffect(() => {
     if (contentRef.current && !isAIRendering) {
@@ -213,6 +234,15 @@ export function ArticleContent({ content, articleId, className = '' }: ArticleCo
           className="opacity-75"
           dangerouslySetInnerHTML={{ __html: content }}
         />
+      </div>
+    );
+  }
+
+  // Markdown fallback renderer (handles cases where the backend HTML contains raw markdown text)
+  if (markdownContent) {
+    return (
+      <div className={`article-content prose prose-lg prose-gray max-w-none ${className}`}>
+        <ReactMarkdown>{markdownContent}</ReactMarkdown>
       </div>
     );
   }

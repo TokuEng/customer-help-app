@@ -13,11 +13,11 @@ services:
     instance_size_slug: basic-xs
     envs:
       - key: NODE_ENV
-        value: production
+        type: SECRET
       - key: NEXT_PUBLIC_API_URL
-        value: ${APP_URL}/backend/api
+        type: SECRET
       - key: BACKEND_URL
-        value: ${APP_URL}/backend
+        type: SECRET
       - key: OPENAI_API_KEY
         type: SECRET
       - key: REVALIDATE_TOKEN
@@ -46,13 +46,13 @@ services:
       - key: NOTION_INDEX_PAGE_ID
         type: SECRET
       - key: EMBEDDINGS_PROVIDER
-        value: openai
+        type: SECRET
       - key: OPENAI_API_KEY
         type: SECRET
       - key: REVALIDATE_TOKEN
         type: SECRET
       - key: WEB_BASE_URL
-        value: ${APP_URL}
+        type: SECRET
       - key: SPACES_KEY
         type: SECRET
       - key: SPACES_SECRET
@@ -60,7 +60,7 @@ services:
       - key: SPACES_BUCKET
         type: SECRET
       - key: SPACES_REGION
-        value: sfo3
+        type: SECRET
       - key: SPACES_CDN_ENDPOINT
         type: SECRET
     routes:
