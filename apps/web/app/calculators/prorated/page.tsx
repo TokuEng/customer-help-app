@@ -128,11 +128,13 @@ export default function ProratedCalculatorPage() {
                 onChange={(e) => setStartDate(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
-              {startDate && (
-                <p className="text-xs text-gray-500">
-                  Formatted: {formatDate(startDate)}
-                </p>
-              )}
+              <div className="h-4 flex items-center">
+                {startDate && (
+                  <p className="text-xs text-gray-500">
+                    Formatted: {formatDate(startDate)}
+                  </p>
+                )}
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -148,6 +150,7 @@ export default function ProratedCalculatorPage() {
                 className="w-full rounded-lg border border-gray-300 px-3 py-2.5 sm:py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 placeholder="5000"
               />
+              <div className="h-4"></div>
             </div>
             
             <div className="flex items-end sm:col-span-2 lg:col-span-1">
