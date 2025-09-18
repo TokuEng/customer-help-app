@@ -72,7 +72,7 @@ async def health_check():
     return {"ok": True}
 
 # Import and include routers after app creation to avoid circular imports
-from routers import search, articles, feedback, revalidate, rag, ingestion, admin, analytics, ai_render
+from routers import search, articles, feedback, revalidate, rag, ingestion, admin, analytics, ai_render, admin_panel
 
 app.include_router(search.router, prefix=settings.api_prefix)
 app.include_router(articles.router, prefix=settings.api_prefix)
@@ -83,6 +83,7 @@ app.include_router(ingestion.router, prefix=settings.api_prefix)
 app.include_router(admin.router, prefix=settings.api_prefix)
 app.include_router(analytics.router, prefix=settings.api_prefix)
 app.include_router(ai_render.router, prefix=settings.api_prefix)
+app.include_router(admin_panel.router, prefix=settings.api_prefix)
 
 # Make db_pool accessible
 app.state.db_pool = lambda: db_pool

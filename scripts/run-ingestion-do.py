@@ -25,13 +25,13 @@ Examples:
   # Force re-ingest all articles (keeps existing data):
   DO_DATABASE_URL="postgresql://..." python scripts/run-ingestion-do.py --force
   
-  # Clean all data and start fresh (WARNING: deletes everything!):
+  # Clean content and start fresh (preserves analytics & user data):
   DO_DATABASE_URL="postgresql://..." python scripts/run-ingestion-do.py --clean
 ''',
     formatter_class=argparse.RawDescriptionHelpFormatter
 )
 parser.add_argument('--clean', '--reset', action='store_true', 
-                    help='Completely erase all articles and images before ingesting (WARNING: destructive!)')
+                    help='Erase all articles and images before ingesting (preserves analytics and user data)')
 parser.add_argument('--force', action='store_true',
                     help='Force re-ingestion of all articles (but keep existing data)')
 args = parser.parse_args()
@@ -74,37 +74,43 @@ async def ensure_schema_exists(database_url):
         raise
 
 async def clean_all_data(database_url, env):
-    """Clean all articles and images from database and Spaces"""
-    print("\n🗑️  Cleaning all existing data...")
+    """Clean only content data (articles/chunks) from database and Spaces, preserving analytics"""
+    print("\n🗑️  Cleaning content data (preserving analytics)...")
     print("=" * 50)
     
     try:
         # Connect to database
         conn = await asyncpg.connect(database_url)
         
-        # Delete all data
-        print("📊 Cleaning database tables...")
+        # Delete only content data, NOT analytics or user-generated data
+        print("📊 Cleaning content tables (preserving analytics)...")
         
-        # Define tables to clean with dependencies order (child tables first)
+        # Define tables to clean - ONLY content-related tables that need to be re-ingested
         tables_to_clean = [
-            # Tables with foreign keys to articles (must be cleaned first)
-            'chunks',
-            'article_views',
-            'search_feedback',
-            
-            # Analytics tables (no foreign keys to articles)
-            'search_queries',
-            'chat_interactions',
-            'page_visits',
-            
-            # Work submission tables
-            'work_submission_comments',  # Has FK to work_submissions
-            'work_submissions',
-            
-            # Main content tables
-            'articles',
-            'ingestion_state'
+            # Content tables that need to be cleaned for re-ingestion
+            'chunks',           # Article chunks (will be regenerated)
+            'articles',         # Article content (will be re-imported from Notion)
+            'ingestion_state'   # Ingestion tracking (needs reset for clean import)
         ]
+        
+        # Tables we're explicitly preserving:
+        preserved_tables = [
+            'article_views',             # Analytics data - PRESERVED
+            'search_feedback',           # User feedback - PRESERVED
+            'search_queries',            # Search analytics - PRESERVED
+            'chat_interactions',         # Chat analytics - PRESERVED
+            'page_visits',              # Page visit analytics - PRESERVED
+            'work_submission_comments',  # User-generated content - PRESERVED
+            'work_submissions'           # User-generated content - PRESERVED
+        ]
+        
+        print("\n📊 Tables to clean (content only):")
+        for table in tables_to_clean:
+            print(f"   • {table}")
+        
+        print("\n✅ Tables to preserve (analytics & user data):")
+        for table in preserved_tables:
+            print(f"   • {table}")
         
         for table in tables_to_clean:
             try:
@@ -124,8 +130,21 @@ async def clean_all_data(database_url, env):
         article_count = await conn.fetchval("SELECT COUNT(*) FROM articles")
         chunk_count = await conn.fetchval("SELECT COUNT(*) FROM chunks")
         
+        print(f"\n📊 Content tables after cleaning:")
         print(f"   ✅ Articles remaining: {article_count}")
         print(f"   ✅ Chunks remaining: {chunk_count}")
+        
+        # Show preserved data counts
+        print(f"\n✅ Preserved analytics data:")
+        for table in preserved_tables:
+            try:
+                count = await conn.fetchval(f"SELECT COUNT(*) FROM {table}")
+                if count > 0:
+                    print(f"   • {table}: {count} records preserved")
+            except Exception as e:
+                if "does not exist" not in str(e):
+                    print(f"   • {table}: (error checking)")
+                pass
         
         await conn.close()
         
@@ -176,7 +195,7 @@ async def clean_all_data(database_url, env):
         except Exception as e:
             print(f"   ⚠️  Could not clean Meilisearch: {e}")
             
-        print("\n✅ All data cleaned successfully!")
+        print("\n✅ Content data cleaned successfully! Analytics and user data preserved.")
         
     except Exception as e:
         print(f"\n❌ Error cleaning data: {e}")
@@ -186,7 +205,7 @@ print("🚀 Running Notion ingestion on DigitalOcean database...")
 print(f"📁 Project root: {project_root}")
 
 if args.clean:
-    print("\n⚠️  CLEAN MODE: Will erase all existing data before ingesting!")
+    print("\n⚠️  CLEAN MODE: Will erase all articles/content before ingesting (preserving analytics)!")
 elif args.force:
     print("\n⚡ FORCE MODE: Will re-ingest all articles (keeping existing data)")
 
@@ -233,7 +252,7 @@ else:
     print("   DO_DATABASE_URL='postgresql://doadmin:AVNS_xxx@...' python scripts/run-ingestion-do.py")
     print("\n   # Force re-ingest all articles (keeps existing data):")
     print("   DO_DATABASE_URL='postgresql://doadmin:AVNS_xxx@...' python scripts/run-ingestion-do.py --force")
-    print("\n   # Clean all data and start fresh:")
+    print("\n   # Clean content and start fresh (preserves analytics):")
     print("   DO_DATABASE_URL='postgresql://doadmin:AVNS_xxx@...' python scripts/run-ingestion-do.py --clean")
     sys.exit(1)
 
@@ -266,6 +285,7 @@ asyncio.run(ensure_schema_exists(env['DATABASE_URL']))
 if args.clean:
     # Get confirmation from user
     print("\n⚠️  WARNING: This will delete ALL articles and images!")
+    print("✅ Analytics and user data will be PRESERVED")
     confirm = input("Are you sure you want to continue? (yes/no): ")
     if confirm.lower() != 'yes':
         print("❌ Operation cancelled")

@@ -3,6 +3,7 @@ import asyncio
 import asyncpg
 import httpx
 import meilisearch
+import json
 from datetime import datetime, timezone
 from typing import List, Dict, Optional
 import sys
@@ -17,7 +18,7 @@ api_env_path = os.path.join(project_root, 'apps', 'api', '.env')
 if os.path.exists(api_env_path):
     load_dotenv(api_env_path)
 
-from apps.api.services.notion import NotionService
+from apps.api.services.notion_enhanced import EnhancedNotionService
 from apps.api.services.chunking import ChunkingService
 from apps.api.services.embeddings import EmbeddingsService
 from apps.api.services.indexers import IndexerService
@@ -27,7 +28,7 @@ async def sync_notion_content():
     """Main sync function to ingest content from Notion"""
     
     # Initialize services
-    notion_service = NotionService()
+    notion_service = EnhancedNotionService()
     indexer_service = IndexerService()
     
     # Create database connection pool for concurrent operations
@@ -110,16 +111,40 @@ async def sync_notion_content():
             # Add successful slugs
             updated_slugs.extend([slug for slug in results if slug is not None])
         
-        # Update ingestion state
+        # Update ingestion state with detailed information
         async with db_pool.acquire() as conn:
+            # Get category counts
+            category_counts = await conn.fetch(
+                """
+                SELECT category, COUNT(*) as count 
+                FROM articles 
+                GROUP BY category
+                """
+            )
+            
+            # Create summary
+            ingestion_summary = {
+                'total_articles': len(updated_slugs),
+                'categories': {row['category']: row['count'] for row in category_counts},
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            }
+            
+            # Print category summary for verification
+            print("\n📊 Final category distribution:")
+            for cat, count in ingestion_summary['categories'].items():
+                print(f"   {cat}: {count} articles")
+            
             await conn.execute(
                 """
-                INSERT INTO ingestion_state (id, last_synced) 
-                VALUES (1, $1)
+                INSERT INTO ingestion_state (id, last_synced, metadata) 
+                VALUES (1, $1, $2::jsonb)
                 ON CONFLICT (id) 
-                DO UPDATE SET last_synced = EXCLUDED.last_synced
+                DO UPDATE SET 
+                    last_synced = EXCLUDED.last_synced,
+                    metadata = EXCLUDED.metadata
                 """,
-                datetime.now(timezone.utc)
+                datetime.now(timezone.utc),
+                json.dumps(ingestion_summary)
             )
         
         # Trigger ISR revalidation for updated pages
