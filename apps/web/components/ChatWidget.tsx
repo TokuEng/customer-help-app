@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, HeadphonesIcon } from 'lucide-react';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '@ai-sdk/react';
@@ -10,6 +10,9 @@ import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import Link from 'next/link';
 import { ChatTracker } from '@/components/ChatTracker';
+import { isFeatureEnabled } from '@/lib/featureFlags';
+import { SupportEscalation } from '@/components/help-center/SupportEscalation';
+import { AgentBadge } from '@/components/help-center/AgentBadge';
 
 // Type for message parts
 interface MessagePart {
@@ -21,6 +24,10 @@ export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showEscalation, setShowEscalation] = useState(false);
+  const [lastTicketId, setLastTicketId] = useState<string | undefined>();
+  const [agentConfidence, setAgentConfidence] = useState<number | undefined>();
+  const [agentCategory, setAgentCategory] = useState<string | undefined>();
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const { messages, sendMessage } = useChat({
@@ -154,22 +161,22 @@ export default function ChatWidget() {
               </div>
             )}
 
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex",
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                )}
-              >
+            {messages.map((message, messageIndex) => (
+              <div key={message.id}>
                 <div
                   className={cn(
-                    "max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2.5 sm:px-4 text-sm break-words",
-                    message.role === 'user'
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-gray-100 text-gray-900 border"
+                    "flex",
+                    message.role === 'user' ? 'justify-end' : 'justify-start'
                   )}
                 >
+                  <div
+                    className={cn(
+                      "max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2.5 sm:px-4 text-sm break-words",
+                      message.role === 'user'
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-gray-100 text-gray-900 border"
+                    )}
+                  >
                   {message.parts.map((part, i) => {
                     switch (part.type) {
                       case 'text':
@@ -259,7 +266,45 @@ export default function ChatWidget() {
                         return null;
                     }
                   })}
+                  </div>
                 </div>
+                
+                {/* Show escalation button and agent badge after assistant messages */}
+                {message.role === 'assistant' && messageIndex === messages.length - 1 && !isLoading && (
+                  <>
+                    {isFeatureEnabled('agentDebugMode') && (
+                      <div className="flex justify-start mt-2 ml-2">
+                        <AgentBadge
+                          confidence={agentConfidence}
+                          category={agentCategory}
+                          ticketId={lastTicketId}
+                        />
+                      </div>
+                    )}
+                    
+                    {isFeatureEnabled('helpCenterV2Agent') && !lastTicketId && (
+                      <div className="flex justify-start mt-3 ml-2">
+                        <Button
+                          onClick={() => setShowEscalation(true)}
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 text-xs"
+                        >
+                          <HeadphonesIcon className="h-3 w-3" />
+                          Still need help?
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {lastTicketId && (
+                      <div className="flex justify-start mt-3 ml-2">
+                        <div className="bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium">
+                          ✅ Support ticket created: #{lastTicketId}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             ))}
 
@@ -303,6 +348,23 @@ export default function ChatWidget() {
             </Button>
           </form>
         </div>
+      )}
+      
+      {/* Support Escalation Modal */}
+      {isFeatureEnabled('helpCenterV2Agent') && (
+        <SupportEscalation
+          open={showEscalation}
+          onOpenChange={setShowEscalation}
+          userQuery={messages.filter(m => m.role === 'user').slice(-1)[0]?.parts[0]?.text || ''}
+          chatHistory={messages.map(m => ({
+            role: m.role,
+            content: m.parts.map(p => p.text).filter(Boolean).join(' ')
+          }))}
+          onTicketCreated={(ticketId) => {
+            setLastTicketId(ticketId)
+            setShowEscalation(false)
+          }}
+        />
       )}
     </>
   );

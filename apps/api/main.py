@@ -85,5 +85,12 @@ app.include_router(analytics.router, prefix=settings.api_prefix)
 app.include_router(ai_render.router, prefix=settings.api_prefix)
 app.include_router(admin_panel.router, prefix=settings.api_prefix)
 
+# Include agent router if feature is enabled
+import os
+if os.getenv("FEATURE_AGENT_CHAT", "false").lower() == "true":
+    from routers import agent
+    app.include_router(agent.router, prefix=settings.api_prefix)
+    logger.info("Agent chat feature enabled - router mounted")
+
 # Make db_pool accessible
 app.state.db_pool = lambda: db_pool

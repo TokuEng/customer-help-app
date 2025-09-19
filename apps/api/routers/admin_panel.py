@@ -430,3 +430,4 @@ async def get_analytics_overview():
             'topSearches': [],
             'topArticles': []
         }
+

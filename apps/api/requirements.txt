@@ -16,3 +16,9 @@ beautifulsoup4==4.13.5
 notion-client==2.5.0
 tiktoken==0.11.0
 boto3==1.35.0
+
+# Agent layer dependencies
+langgraph==0.2.60
+langsmith==0.2.0
+langchain-core==0.3.30
+langchain-openai==0.3.0
