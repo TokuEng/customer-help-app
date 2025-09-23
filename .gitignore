@@ -10,6 +10,7 @@ __pycache__/
 .env.local
 .env.production
 .env*.local
+.env.*
 
 # Build outputs
 .next/
@@ -57,3 +58,5 @@ out/
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+switch-env.sh

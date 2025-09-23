@@ -192,4 +192,35 @@ async def get_page_visit_stats(request: Request, days: int = 7):
             "period_days": days
         }
 
+@router.get("/category-counts")
+async def get_category_counts(request: Request):
+    """Get article counts by category"""
+    try:
+        db_pool = request.app.state.db_pool()
+        async with db_pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT 
+                    category,
+                    COUNT(*) as count
+                FROM articles
+                WHERE visibility = 'public'
+                AND category IS NOT NULL
+                GROUP BY category
+                ORDER BY category
+                """
+            )
+            
+            return [
+                {
+                    "category": row['category'],
+                    "count": row['count']
+                }
+                for row in rows
+            ]
+    except Exception as e:
+        logger.error(f"Error getting category counts: {e}")
+        # Return empty list on error
+        return []
+
 

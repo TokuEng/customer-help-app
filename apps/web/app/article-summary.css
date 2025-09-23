@@ -1,0 +1,102 @@
+/* Article Summary Component Styles */
+
+/* Enhanced text wrapping for long words and URLs */
+.article-summary-text {
+  /* Modern browsers */
+  overflow-wrap: anywhere;
+  /* Fallback for older browsers */
+  word-wrap: break-word;
+  word-break: break-word;
+  /* Prevent horizontal overflow */
+  max-width: 100%;
+  hyphens: auto;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 640px) {
+  .article-summary-text {
+    font-size: 0.875rem; /* 14px */
+    line-height: 1.625;
+  }
+}
+
+/* Gradient background improvements for better contrast */
+.summary-gradient-bg {
+  background: linear-gradient(135deg, 
+    rgba(239, 246, 255, 0.95) 0%,  /* blue-50 with opacity */
+    rgba(238, 242, 255, 0.85) 50%, /* indigo-50 with opacity */
+    rgba(239, 246, 255, 0.95) 100% /* blue-50 with opacity */
+  );
+  backdrop-filter: blur(4px);
+}
+
+/* Improve fade effect for collapsed content */
+.summary-fade-mask {
+  background: linear-gradient(to top,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.95) 30%,
+    rgba(255, 255, 255, 0.8) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  pointer-events: none;
+  height: 4rem;
+}
+
+/* Ensure proper text color contrast */
+.summary-text-enhanced {
+  color: rgb(31, 41, 55); /* gray-800 */
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+/* Smooth transitions for expand/collapse */
+.summary-transition {
+  transition: max-height 0.3s ease-in-out, opacity 0.2s ease-in-out;
+}
+
+/* Button hover states with better touch targets */
+.summary-expand-btn {
+  min-height: 44px; /* WCAG touch target size */
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease;
+}
+
+.summary-expand-btn:hover {
+  background-color: rgba(59, 130, 246, 0.05); /* blue-500 with low opacity */
+}
+
+.summary-expand-btn:active {
+  transform: scale(0.98);
+}
+
+/* Print styles */
+@media print {
+  .summary-expand-btn {
+    display: none;
+  }
+  
+  .summary-fade-mask {
+    display: none;
+  }
+  
+  /* Show all content when printing */
+  .article-summary-content {
+    max-height: none !important;
+  }
+}
+
+/* Dark mode support (if implemented in future) */
+@media (prefers-color-scheme: dark) {
+  .summary-gradient-bg {
+    background: linear-gradient(135deg, 
+      rgba(30, 58, 138, 0.1) 0%,   /* blue-900 with low opacity */
+      rgba(49, 46, 129, 0.1) 50%,  /* indigo-900 with low opacity */
+      rgba(30, 58, 138, 0.1) 100%  /* blue-900 with low opacity */
+    );
+  }
+  
+  .summary-text-enhanced {
+    color: rgb(229, 231, 235); /* gray-200 */
+    text-shadow: none;
+  }
+}
