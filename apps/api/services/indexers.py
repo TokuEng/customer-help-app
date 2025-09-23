@@ -10,14 +10,17 @@ import numpy as np
 try:
     from services.chunking import ChunkingService  # When running from apps/api directory
     from services.embeddings import EmbeddingsService
+    from services.ai_summarizer import AISummarizerService
 except ImportError:
     from apps.api.services.chunking import ChunkingService  # When running from project root
     from apps.api.services.embeddings import EmbeddingsService
+    from apps.api.services.ai_summarizer import AISummarizerService
 
 class IndexerService:
     def __init__(self):
         self.chunking_service = ChunkingService()
         self.embeddings_service = EmbeddingsService()
+        self.ai_summarizer = AISummarizerService()
         self.meili_settings_configured = False
     
     async def upsert_article(
@@ -41,8 +44,20 @@ class IndexerService:
         word_count = len(article_data['content_md'].split())
         reading_time_min = max(1, round(word_count / 200))
         
-        # Generate summary if not provided
-        summary = self._generate_summary(article_data['content_md'])
+        # Generate AI-powered summary
+        try:
+            summary = await self.ai_summarizer.generate_summary(
+                title=article_data['title'],
+                content_md=article_data['content_md'],
+                category=category,
+                article_type=article_type,
+                max_chars=250
+            )
+            print(f"✨ AI summary generated for: {article_data['title'][:50]}...")
+        except Exception as e:
+            print(f"⚠️ AI summary failed, using fallback for: {article_data['title'][:50]}... - {str(e)}")
+            # Fall back to basic extraction
+            summary = self._generate_summary(article_data['content_md'])
         
         # Chunk the content
         chunks = self.chunking_service.to_chunks(article_data['content_md'])

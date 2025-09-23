@@ -7,6 +7,8 @@ import { Feedback } from '@/components/Feedback';
 import Link from 'next/link';
 import { VisitTracker } from '@/components/VisitTracker';
 import { ArticleContent } from '@/components/ArticleContent';
+import { ArticleSummary } from '@/components/ArticleSummary';
+import { ArticleSummaryErrorBoundary } from '@/components/ArticleSummaryErrorBoundary';
 import { RecentArticleTracker } from '@/components/RecentArticleTracker';
 import { cleanMarkdown, formatArticleType } from '@/lib/text-utils';
 import { Icon } from '@/components/ui/icon';
@@ -78,14 +80,19 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                     </span>
                   </div>
                   
-                  {article.summary && (
-                    <p className="mt-4 sm:mt-6 text-base sm:text-lg leading-relaxed text-gray-600 border-l-4 border-primary pl-4 sm:pl-6 py-3 sm:py-4 brand-surface rounded-r-lg">{cleanMarkdown(article.summary)}</p>
-                  )}
+                  {/* Enhanced summary with better text handling and responsive design */}
+                  <ArticleSummaryErrorBoundary>
+                    <ArticleSummary summary={article.summary} />
+                  </ArticleSummaryErrorBoundary>
                 </header>
 
                 {/* Content */}
                 <div className="prose prose-base sm:prose-lg prose-brand max-w-none">
-                  <ArticleContent content={article.content_html} articleId={article.id} />
+                  <ArticleContent 
+                    content={article.content_html} 
+                    articleId={article.id}
+                    summary={article.summary}
+                  />
                 </div>
 
                 {/* Feedback */}

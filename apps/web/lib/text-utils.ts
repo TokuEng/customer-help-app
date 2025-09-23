@@ -9,10 +9,29 @@ export function cleanMarkdown(text: string): string {
   if (!text) return '';
   
   return text
-    .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove **bold** formatting
-    .replace(/\*([^*]+)\*/g, '$1')     // Remove *italic* formatting
+    // Remove HTML tags if present
+    .replace(/<[^>]*>/g, '')
+    // Remove markdown formatting
+    .replace(/\*\*([^*]+)\*\*/g, '$1')     // Remove **bold** formatting
+    .replace(/\*([^*]+)\*/g, '$1')         // Remove *italic* formatting
+    .replace(/__([^_]+)__/g, '$1')         // Remove __alt bold__ formatting
+    .replace(/_([^_]+)_/g, '$1')           // Remove _alt italic_ formatting
+    // Remove links but keep text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/\[([^\]]+)\]\[[^\]]+\]/g, '$1')
+    // Remove images
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+    // Remove code blocks and inline code
+    .replace(/```[^`]*```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    // Remove prefixes and markers
     .replace(/^Toku:\s*/i, '')         // Remove "Toku:" prefix
-    .replace(/^\s*#+\s*/, '')          // Remove heading markers
+    .replace(/^Summary:\s*/i, '')      // Remove "Summary:" prefix
+    .replace(/^\s*#+\s*/gm, '')        // Remove heading markers
+    // Clean special characters that might break rendering
+    .replace(/[<>]/g, '')
+    // Normalize whitespace
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -99,16 +118,33 @@ export function cleanSnippet(text: string): string {
   if (!text) return '';
   
   return text
+    // Remove image paths and URLs first
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')  // Remove images
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to text only
+    .replace(/https?:\/\/[^\s]+/g, '')       // Remove URLs
+    .replace(/[a-zA-Z0-9-]+\.(png|jpg|jpeg|gif|svg|webp)(\))?/gi, '') // Remove image filenames
+    .replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, '') // Remove UUIDs
+    .replace(/\.{3,}otion-images[^)]*\)/g, '') // Remove notion image paths
+    // Remove markdown formatting
     .replace(/\*\*([^*]+)\*\*/g, '$1')     // Remove **bold** formatting
     .replace(/\*([^*]+)\*/g, '$1')         // Remove *italic* formatting
+    .replace(/__([^_]+)__/g, '$1')         // Remove __alt bold__ formatting
+    .replace(/_([^_]+)_/g, '$1')           // Remove _alt italic_ formatting
+    // Remove special markers and prefixes
     .replace(/^Toku:\s*/i, '')            // Remove "Toku:" prefix
-    .replace(/^\s*#+\s*/, '')             // Remove heading markers
-    .replace(/^\s*\d+\.\s*/gm, '')       // Remove numbered list markers
+    .replace(/^\s*#+\s*/gm, '')           // Remove heading markers
+    .replace(/^\s*\d+\.\s*/gm, '')        // Remove numbered list markers
     .replace(/^\s*[-*+]\s*/gm, '')        // Remove bullet points
+    .replace(/^>/gm, '')                  // Remove blockquote markers
+    // Remove code blocks and inline code
+    .replace(/```[^`]*```/g, '')          // Remove code blocks
+    .replace(/`([^`]+)`/g, '$1')          // Remove inline code formatting
+    // Clean up whitespace and special characters
     .replace(/\n+/g, ' ')                 // Replace line breaks with spaces
     .replace(/\s+/g, ' ')                 // Normalize whitespace
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to text only
-    .replace(/`([^`]+)`/g, '$1')          // Remove code formatting
+    .replace(/[()[\]{}]/g, '')           // Remove brackets
+    .replace(/\s+([.,!?])/g, '$1')       // Fix punctuation spacing
+    .replace(/([.,!?])\1+/g, '$1')       // Remove duplicate punctuation
     .trim();
 }
 

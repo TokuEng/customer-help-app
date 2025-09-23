@@ -256,8 +256,18 @@ else:
     print("   DO_DATABASE_URL='postgresql://doadmin:AVNS_xxx@...' python scripts/run-ingestion-do.py --clean")
     sys.exit(1)
 
+# Ensure OpenAI API key for AI summaries
+if 'OPENAI_API_KEY' not in env:
+    # Try to get from environment or .env file
+    openai_key = os.getenv('OPENAI_API_KEY')
+    if openai_key:
+        env['OPENAI_API_KEY'] = openai_key
+    else:
+        print("\n⚠️  OPENAI_API_KEY not found - AI summaries will use fallback extraction")
+        print("   To enable AI summaries, set OPENAI_API_KEY in your .env file")
+
 # Verify required environment variables
-required_vars = ['NOTION_TOKEN', 'NOTION_INDEX_PAGE_ID', 'OPENAI_API_KEY', 'MEILI_HOST', 'MEILI_MASTER_KEY']
+required_vars = ['NOTION_TOKEN', 'NOTION_INDEX_PAGE_ID', 'MEILI_HOST', 'MEILI_MASTER_KEY']
 missing_vars = [var for var in required_vars if not env.get(var)]
 
 if missing_vars:
@@ -296,9 +306,10 @@ if args.clean:
     print("\n🔄 Proceeding with fresh ingestion...")
 
 print("\n⚡ Processing articles in parallel (10 at a time)")
+print("🤖 AI summaries will be generated for each article")
 print("📊 Estimated time: 3-5 minutes for all articles\n")
 
-print("Starting ingestion...")
+print("Starting ingestion with AI summary generation...")
 
 # Prepare command
 cmd = [sys.executable, '-u', 'functions/ingestion/handler.py']

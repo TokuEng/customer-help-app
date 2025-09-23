@@ -4,6 +4,47 @@
   line-height: 1.7;
 }
 
+/* Hide problematic blockquotes from Notion import */
+.article-content blockquote:empty {
+  display: none;
+}
+
+/* Fix blockquote styling to prevent black bars */
+.article-content blockquote {
+  /* Override any background that might cause black bars */
+  background: transparent !important;
+  border-left: 4px solid var(--toku);
+  padding-left: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+/* Ensure blockquotes with only emojis don't create visual issues */
+.article-content blockquote p:first-child:last-child {
+  /* Single paragraph in blockquote */
+  display: inline-block;
+}
+
+/* Hide blockquotes that appear to only contain whitespace or single chars */
+.article-content blockquote:has(> p:only-child) {
+  /* Check content length via JavaScript instead */
+}
+
+/* Hide consecutive hr elements and reduce spacing */
+.article-content hr + hr {
+  display: none;
+}
+
+/* Hide hr elements at the very start of content */
+.article-content > hr:first-child,
+.article-content > hr:nth-child(2) {
+  display: none;
+}
+
+/* Reduce excessive hr spacing */
+.article-content hr {
+  margin: 2rem 0;
+}
+
 .article-content h1,
 .article-content h2,
 .article-content h3,

@@ -8,9 +8,10 @@ interface ArticleContentProps {
   content: string;
   articleId: string;
   className?: string;
+  summary?: string | null;
 }
 
-export function ArticleContent({ content, articleId, className = '' }: ArticleContentProps) {
+export function ArticleContent({ content, articleId, className = '', summary }: ArticleContentProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const [isAIRendering, setIsAIRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
@@ -113,6 +114,78 @@ export function ArticleContent({ content, articleId, className = '' }: ArticleCo
   useEffect(() => {
     if (contentRef.current && !isAIRendering) {
       const container = contentRef.current;
+      
+      // Clean up problematic HTML elements from Notion import
+      const cleanupProblematicElements = () => {
+        // Remove empty or emoji-only blockquotes
+        const blockquotes = container.querySelectorAll('blockquote');
+        blockquotes.forEach((blockquote) => {
+          const text = blockquote.textContent?.trim() || '';
+          // If blockquote only contains 1-2 characters (likely an emoji) or is empty
+          if (text.length <= 2 || text === '' || /^[\u{1F300}-\u{1F9FF}]$/u.test(text)) {
+            blockquote.remove();
+          }
+        });
+        
+        // Remove consecutive hr elements and those at the start
+        const hrs = container.querySelectorAll('hr');
+        let previousWasHr = false;
+        hrs.forEach((hr) => {
+          // Remove if it's among the first two elements
+          if (hr.previousElementSibling === null || 
+              (hr.previousElementSibling && hr.previousElementSibling.tagName === 'HR')) {
+            hr.remove();
+            return;
+          }
+          
+          // Remove consecutive hrs
+          if (previousWasHr) {
+            hr.remove();
+            return;
+          }
+          previousWasHr = true;
+        });
+        
+        // Clean up double hrs at the end
+        const allElements = Array.from(container.children);
+        for (let i = allElements.length - 1; i >= 1; i--) {
+          if (allElements[i].tagName === 'HR' && allElements[i - 1].tagName === 'HR') {
+            (allElements[i] as HTMLElement).remove();
+          }
+        }
+        
+        // Remove duplicate summary text from beginning of content
+        if (summary) {
+          const firstParagraph = container.querySelector('p:first-child');
+          if (firstParagraph) {
+            const paragraphText = firstParagraph.textContent?.trim() || '';
+            const summaryText = summary.trim();
+            
+            // Check if the first paragraph is very similar to the summary
+            // Remove common formatting differences and compare
+            const cleanParagraph = paragraphText.toLowerCase()
+              .replace(/[^\w\s]/g, '') // Remove punctuation
+              .replace(/\s+/g, ' '); // Normalize spaces
+            const cleanSummary = summaryText.toLowerCase()
+              .replace(/[^\w\s]/g, '')
+              .replace(/\s+/g, ' ');
+            
+            // Check if they're the same or if paragraph starts with summary
+            if (cleanParagraph === cleanSummary || 
+                cleanParagraph.startsWith(cleanSummary.substring(0, Math.min(50, cleanSummary.length)))) {
+              firstParagraph.remove();
+              
+              // Also remove the following hr if it exists
+              const nextElement = container.querySelector('p:first-child + hr, hr:first-child');
+              if (nextElement && nextElement.tagName === 'HR') {
+                nextElement.remove();
+              }
+            }
+          }
+        }
+      };
+      
+      cleanupProblematicElements();
 
       const isInCode = (el: Element) => !!el.closest('pre, code');
 
@@ -203,7 +276,7 @@ export function ArticleContent({ content, articleId, className = '' }: ArticleCo
         };
       });
     }
-  }, [content, isAIRendering]);
+  }, [content, isAIRendering, summary]);
 
   if (isAIRendering) {
     return (

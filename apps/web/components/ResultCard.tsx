@@ -52,15 +52,15 @@ export function ResultCard({
             </span>
           </div>
         </CardHeader>
-        {(snippet || summary) && (
+        {(summary || snippet) && (
           <CardContent className="pt-0 px-3 pb-3 sm:px-4 sm:pb-4">
-            {snippet ? (
-              <p className="text-sm text-gray-600 line-clamp-2 leading-normal">
-                {cleanSnippet(snippet)}
-              </p>
-            ) : summary ? (
+            {summary ? (
               <p className="text-sm text-gray-600 line-clamp-2 leading-normal">
                 {cleanMarkdown(summary)}
+              </p>
+            ) : snippet ? (
+              <p className="text-sm text-gray-600 line-clamp-2 leading-normal">
+                {cleanSnippet(snippet)}
               </p>
             ) : null}
           </CardContent>
