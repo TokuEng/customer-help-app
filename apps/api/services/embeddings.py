@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import numpy as np
 import openai
 import asyncio
@@ -10,10 +10,20 @@ except ImportError:
     from apps.api.core.settings import settings  # When running from project root
 
 class EmbeddingsService:
-    def __init__(self):
+    def __init__(self, model_type: Optional[str] = None):
+        """
+        Initialize embeddings service with specified model.
+        
+        Args:
+            model_type: Either 'text-embedding-3-small' or 'text-embedding-3-large'.
+                       If None, defaults to 'text-embedding-3-small' for backward compatibility.
+        """
+        self.model = model_type or "text-embedding-3-small"
+        # Set dimensions based on model
+        self.dimensions = 1536 if "small" in self.model else 3072
+        
         if settings.embeddings_provider == "openai":
             openai.api_key = settings.openai_api_key
-            self.model = "text-embedding-3-small"  # 1536 dimensions
     
     async def embed(self, texts: List[str]) -> List[np.ndarray]:
         """Generate embeddings for a list of texts"""
@@ -63,7 +73,7 @@ class EmbeddingsService:
             # Create deterministic "embedding" based on text length and content
             # This is just for testing - replace with real local model
             np.random.seed(hash(text) % 2**32)
-            embedding = np.random.randn(1536).astype(np.float32)
+            embedding = np.random.randn(self.dimensions).astype(np.float32)
             # Normalize
             embedding = embedding / np.linalg.norm(embedding)
             embeddings.append(embedding)
@@ -82,7 +92,7 @@ class EmbeddingsService:
     def average_embeddings(self, embeddings: List[np.ndarray]) -> np.ndarray:
         """Compute the average of multiple embeddings"""
         if not embeddings:
-            return np.zeros(1536)
+            return np.zeros(self.dimensions)
         
         # Stack embeddings and compute mean
         stacked = np.vstack(embeddings)

@@ -372,3 +372,4 @@ class EnhancedNotionService(BaseNotionService):
     async def walk_index(self, index_page_id: str) -> List[Dict[str, str]]:
         """Override the base walk_index to use enhanced version"""
         return await self.walk_index_enhanced(index_page_id)
+

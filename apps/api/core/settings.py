@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     spaces_region: str = "sfo3"
     spaces_cdn_endpoint: Optional[str] = None
     
+    # Cohere Reranking
+    cohere_api_key: Optional[str] = None
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

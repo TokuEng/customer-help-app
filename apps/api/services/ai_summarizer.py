@@ -221,3 +221,4 @@ def get_summarizer() -> AISummarizerService:
     if _summarizer_instance is None:
         _summarizer_instance = AISummarizerService()
     return _summarizer_instance
+
