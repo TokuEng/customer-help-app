@@ -47,3 +47,4 @@ export class ArticleSummaryErrorBoundary extends React.Component<ErrorBoundaryPr
     return this.props.children;
   }
 }
+
