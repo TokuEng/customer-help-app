@@ -6,9 +6,7 @@ import asyncpg
 import json
 import uuid
 from core.settings import settings
-import logging
-
-logger = logging.getLogger(__name__)
+# Logging removed
 
 router = APIRouter()
 
@@ -537,7 +535,6 @@ async def get_general_articles(
             
             return [dict(row) for row in rows]
     except Exception as e:
-        logger.error(f"Error fetching general articles: {e}")
         # Return empty array instead of failing
         return []
 
@@ -801,7 +798,6 @@ async def get_analytics(
                 }
             }
     except Exception as e:
-        logger.error(f"Error fetching analytics: {e}")
         # Return zeros if there's an error
         return {
             "searchQueries": 0,

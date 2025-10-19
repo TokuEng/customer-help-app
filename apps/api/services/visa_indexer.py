@@ -8,8 +8,6 @@ import re
 from typing import Optional, List, Dict
 import asyncpg
 from fastapi import Depends, Request
-import logging
-
 # Import existing services
 from services.chunking import ChunkingService
 from services.embeddings import EmbeddingsService
@@ -19,8 +17,6 @@ try:
     from core.settings import settings
 except ImportError:
     from apps.api.core.settings import settings
-
-logger = logging.getLogger(__name__)
 
 class VisaIndexerService:
     """
@@ -77,8 +73,6 @@ class VisaIndexerService:
         
         # 4. Store chunks
         await self._store_chunks(article_id, chunks, embeddings)
-        
-        logger.info(f"✅ Indexed visa article: {title} ({len(chunks)} chunks)")
         
         return article_id
     

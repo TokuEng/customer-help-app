@@ -156,7 +156,6 @@ export default function ChatWidget() {
       );
       
     } catch (error) {
-      console.error('Chat error:', error);
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',

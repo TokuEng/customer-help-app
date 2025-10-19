@@ -9,12 +9,10 @@ from typing import Optional, List, Dict
 import io
 import pypdf
 import docx
-import logging
 from services.visa_indexer import VisaIndexerService, get_visa_indexer
 from core.settings import settings
 
 router = APIRouter(prefix="/admin/visa", tags=["admin"])
-logger = logging.getLogger(__name__)
 
 class VisaDocumentInput(BaseModel):
     """Text-based visa document input"""
@@ -57,7 +55,7 @@ async def ingest_text_document(
         }
     
     except Exception as e:
-        logger.error(f"Error ingesting text document: {e}")
+        # Error logging removed(f"Error ingesting text document: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/ingest-file")
@@ -118,7 +116,7 @@ async def ingest_file_document(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error ingesting file document: {e}")
+        # Error logging removed(f"Error ingesting file document: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/articles")
@@ -160,7 +158,7 @@ async def list_visa_articles(
         
         return [dict(row) for row in rows]
     except Exception as e:
-        logger.error(f"Error listing visa articles: {e}")
+        # Error logging removed(f"Error listing visa articles: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Helper functions

@@ -111,7 +111,7 @@ export default function IngestionManagement() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch articles:', error);
+      // Failed to fetch articles
     }
   };
 
@@ -140,7 +140,7 @@ export default function IngestionManagement() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      // Failed to fetch stats
     }
   };
 

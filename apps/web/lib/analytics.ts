@@ -23,7 +23,7 @@ class AnalyticsService {
         body: JSON.stringify({ article_id: articleId }),
       });
     } catch (error) {
-      console.error('Failed to track article view:', error);
+      // Failed to track article view
     }
   }
 
@@ -41,7 +41,7 @@ class AnalyticsService {
         }),
       });
     } catch (error) {
-      console.error('Failed to track search:', error);
+      // Failed to track search
     }
   }
 
@@ -60,7 +60,7 @@ class AnalyticsService {
         }),
       });
     } catch (error) {
-      console.error('Failed to track page visit:', error);
+      // Failed to track page visit
     }
   }
 }

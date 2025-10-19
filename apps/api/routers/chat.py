@@ -8,12 +8,9 @@ from pydantic import BaseModel, Field
 from typing import Literal, Optional
 import time
 from datetime import datetime
-import logging
 import json
 
 from services.langchain_rag import MultiCollectionRAG, CollectionType
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -115,7 +112,6 @@ async def chat_stream(
             yield "data: [DONE]\n\n"
             
         except Exception as e:
-            logger.error(f"Error in chat stream: {e}")
             yield f"data: Error: {str(e)}\n\n"
     
     return StreamingResponse(
@@ -153,5 +149,4 @@ async def chat_query(
         )
         
     except Exception as e:
-        logger.error(f"Error in chat query: {e}")
         raise HTTPException(status_code=500, detail=str(e))

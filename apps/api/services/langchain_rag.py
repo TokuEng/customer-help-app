@@ -6,7 +6,6 @@ Pydantic v2 compatible with proper model rebuilding.
 
 from typing import Literal, List, AsyncGenerator
 import asyncpg
-import logging
 import os
 
 # Import settings
@@ -18,7 +17,6 @@ except ImportError:
     except ImportError:
         from config import settings
 
-logger = logging.getLogger(__name__)
 
 # Set OpenAI API key early
 if not os.getenv("OPENAI_API_KEY"):
@@ -44,7 +42,7 @@ try:
     ChatOpenAI.model_rebuild()
     OpenAIEmbeddings.model_rebuild()
 except Exception as e:
-    logger.warning(f"Model rebuild warning (can be ignored): {e}")
+    pass  # Model rebuild warning can be ignored
 
 CollectionType = Literal["general", "visa"]
 
@@ -104,12 +102,7 @@ class CustomVectorRetriever:
             
             docs = []
             async with self.db_pool.acquire() as conn:
-                # Log the query for debugging
-                logger.debug(f"Executing vector search with embedding length: {len(query_embedding)}")
-                
                 rows = await conn.fetch(query_sql, embedding_str, self.k)
-                
-                logger.info(f"Vector search query returned {len(rows)} rows")
                 
                 for row in rows:
                     doc = Document(
@@ -124,14 +117,9 @@ class CustomVectorRetriever:
                     )
                     docs.append(doc)
             
-            logger.info(f"Vector search returned {len(docs)} documents for {self.collection_type}")
             return docs
             
         except Exception as e:
-            logger.error(f"Error in vector retrieval: {type(e).__name__}: {str(e)}")
-            logger.error(f"Query: {query}")
-            import traceback
-            logger.error(traceback.format_exc())
             return []
     
     def get_relevant_documents(self, query: str) -> List[Document]:
@@ -174,7 +162,7 @@ class MultiCollectionRAG:
             openai_api_key=settings.openai_api_key
         )
         
-        logger.info("✅ MultiCollectionRAG initialized successfully")
+        pass  # MultiCollectionRAG initialized
     
     async def get_vector_retriever(
         self, 
@@ -254,16 +242,13 @@ class MultiCollectionRAG:
             
             # Create BM25 retriever
             if not documents:
-                logger.warning(f"No chunks found for BM25 indexing ({collection_type})")
                 documents = [Document(page_content="No content available", metadata={})]
             
             bm25_retriever = BM25Retriever.from_documents(documents, k=k)
             
-            logger.info(f"BM25 retriever created with {len(documents)} chunks for {collection_type}")
             return bm25_retriever
             
         except Exception as e:
-            logger.error(f"Error creating BM25 retriever: {e}")
             fallback_doc = Document(page_content="Error loading content", metadata={})
             return BM25Retriever.from_documents([fallback_doc], k=k)
     
@@ -289,12 +274,8 @@ class MultiCollectionRAG:
         try:
             bm25_docs = bm25_retriever.invoke(query)
         except Exception as e:
-            logger.warning(f"BM25 retrieval failed: {e}")
             bm25_docs = []
         
-        # Log what we're retrieving for debugging
-        logger.info(f"Vector search returned {len(vector_docs)} docs for query: {query}")
-        logger.info(f"BM25 search returned {len(bm25_docs)} docs")
         
         # Combine and deduplicate results
         seen_content = set()
@@ -307,8 +288,7 @@ class MultiCollectionRAG:
                 seen_content.add(content_hash)
                 combined_docs.append(doc)
                 # Log relevant chunks
-                if any(term in doc.page_content.lower() for term in ['german', 'blue card', 'fee', '€']):
-                    logger.info(f"Found relevant chunk: {doc.page_content[:200]}...")
+                pass
         
         # Add BM25 results if we have room
         for doc in bm25_docs:
@@ -319,7 +299,6 @@ class MultiCollectionRAG:
                 seen_content.add(content_hash)
                 combined_docs.append(doc)
         
-        logger.info(f"Hybrid search returned {len(combined_docs)} unique documents")
         return combined_docs[:k]
     
     def _get_system_prompt(self, collection_type: CollectionType) -> str:
@@ -453,7 +432,6 @@ Provide helpful, accurate responses in well-formatted markdown."""
                     yield str(chunk)
                 
         except Exception as e:
-            logger.error(f"Error in stream_response: {e}")
             yield f"I encountered an error processing your request. Please try again or contact support."
     
     async def get_response(
@@ -469,7 +447,6 @@ Provide helpful, accurate responses in well-formatted markdown."""
             return response
             
         except Exception as e:
-            logger.error(f"Error in get_response: {e}")
             return "I encountered an error processing your request. Please try again or contact support."
 
 
