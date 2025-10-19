@@ -65,6 +65,13 @@ async def search(request: Request, body: SearchRequest):
         # Get database pool
         db_pool = request.app.state.db_pool()
         
+        # Track search query
+        async with db_pool.acquire() as conn:
+            await conn.execute("""
+                INSERT INTO search_queries (query, results_count, searched_at)
+                VALUES ($1, $2, NOW())
+            """, body.q, search_results.get('estimatedTotalHits', 0) if isinstance(search_results, dict) else len(search_results.hits))
+        
         # Build results with snippets
         results = []
         hits = search_results.get('hits', []) if isinstance(search_results, dict) else search_results.hits

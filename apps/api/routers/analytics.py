@@ -2,12 +2,10 @@ from fastapi import APIRouter, Request, HTTPException
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 from datetime import datetime
-import logging
 import json
 import uuid
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
 # Request models
 class ArticleViewRequest(BaseModel):
@@ -46,7 +44,7 @@ async def track_article_view(request: Request, data: ArticleViewRequest):
             )
         return {"success": True}
     except Exception as e:
-        logger.error(f"Error tracking article view: {e}")
+        # Error logging removed(f"Error tracking article view: {e}")
         # Return success even on error to not disrupt user experience
         return {"success": True}
 
@@ -67,7 +65,7 @@ async def track_search(request: Request, data: SearchTrackRequest):
             )
         return {"success": True}
     except Exception as e:
-        logger.error(f"Error tracking search: {e}")
+        # Error logging removed(f"Error tracking search: {e}")
         return {"success": True}
 
 @router.post("/track-chat")
@@ -81,7 +79,7 @@ async def track_chat(request: Request, data: ChatTrackRequest):
             
             await conn.execute(
                 """
-                INSERT INTO chat_logs (
+                INSERT INTO chat_interactions (
                     session_id, user_message, assistant_response, 
                     contexts_used, response_time_ms, created_at
                 )
@@ -95,7 +93,7 @@ async def track_chat(request: Request, data: ChatTrackRequest):
             )
         return {"success": True}
     except Exception as e:
-        logger.error(f"Error tracking chat: {e}")
+        # Error logging removed(f"Error tracking chat: {e}")
         return {"success": True}
 
 @router.post("/track-page-visit")
@@ -115,7 +113,7 @@ async def track_page_visit(request: Request, data: PageVisitRequest):
             )
         return {"success": True}
     except Exception as e:
-        logger.error(f"Error tracking page visit: {e}")
+        # Error logging removed(f"Error tracking page visit: {e}")
         return {"success": True}
 
 @router.get("/popular-articles")
@@ -155,7 +153,7 @@ async def get_popular_articles(request: Request, limit: int = 5):
                 for row in rows
             ]
     except Exception as e:
-        logger.error(f"Error getting popular articles: {e}")
+        # Error logging removed(f"Error getting popular articles: {e}")
         # Return empty list on error
         return []
 
@@ -184,7 +182,7 @@ async def get_page_visit_stats(request: Request, days: int = 7):
                 "period_days": days
             }
     except Exception as e:
-        logger.error(f"Error getting page visit stats: {e}")
+        # Error logging removed(f"Error getting page visit stats: {e}")
         return {
             "total_visits": 0,
             "unique_pages": 0,
@@ -219,7 +217,7 @@ async def get_category_counts(request: Request):
                 for row in rows
             ]
     except Exception as e:
-        logger.error(f"Error getting category counts: {e}")
+        # Error logging removed(f"Error getting category counts: {e}")
         # Return empty list on error
         return []
 

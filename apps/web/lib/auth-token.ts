@@ -2,7 +2,8 @@
 export function getAuthToken(): string {
   // In development, use the local admin key
   if (process.env.NODE_ENV === 'development') {
-    return 'local_admin_dev_2024'
+    // Using the token that works with your backend
+    return 'admin_access_token_toku'
   }
   
   // In production, use the production admin key

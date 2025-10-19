@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { getAuthToken } from '@/lib/auth-token';
 
 interface AnalyticsData {
   searchQueries: number;
@@ -41,6 +42,28 @@ export default function AnalyticsPage() {
   });
   const [loading, setLoading] = useState(true);
 
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+      const token = getAuthToken();
+      
+      const response = await fetch(`${backendUrl}/admin/analytics?range=${timeRange}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAnalytics(data);
+      }
+    } catch (error) {
+      // Failed to fetch analytics
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchAnalytics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,21 +80,6 @@ export default function AnalyticsPage() {
       </div>
     );
   }
-
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/admin/analytics?range=${timeRange}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAnalytics(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch analytics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;

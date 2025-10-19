@@ -1,6 +1,4 @@
 import { NextRequest } from "next/server";
-import { openai } from "@ai-sdk/openai";
-import { streamText } from "ai";
 
 // Company system prompt as specified
 const SYSTEM_PROMPT = `You are an HR professional for a global Employer of Record (EOR) company. Your job is to create compelling job offer emails that transparently explain compensation breakdowns to potential employees.
@@ -87,14 +85,82 @@ TASKS:
 
 3) Include a note that tax estimates are based on standard deductions and may vary based on personal circumstances.`;
 
-    const result = await streamText({
-      model: openai('gpt-4o-mini'),
-      system: SYSTEM_PROMPT,
-      prompt: userPrompt,
-      temperature: 0.3,
+    // Get OpenAI API key from environment
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (!openaiApiKey) {
+      return new Response('OpenAI API key not configured', { status: 500 });
+    }
+
+    // Call OpenAI API directly
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.3,
+        stream: true,
+      }),
     });
 
-    return result.toTextStreamResponse();
+    if (!response.ok) {
+      return new Response('Failed to generate summary', { status: 500 });
+    }
+
+    // Create a streaming response
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = response.body?.getReader();
+        if (!reader) {
+          controller.close();
+          return;
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              
+              try {
+                const json = JSON.parse(data);
+                const content = json.choices?.[0]?.delta?.content;
+                if (content) {
+                  controller.enqueue(encoder.encode(content));
+                }
+              } catch {
+                // Ignore parse errors
+              }
+            }
+          }
+        }
+
+        controller.close();
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    });
   } catch {
     // Internal error occurred
     return new Response('Failed to generate summary', { status: 500 });

@@ -2,15 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncpg
-import logging
 from core.settings import settings
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 # Database connection pool
 db_pool = None
@@ -19,8 +11,6 @@ db_pool = None
 async def lifespan(app: FastAPI):
     global db_pool
     # Startup
-    logger.info("Starting up API server...")
-    logger.info(f"Database URL: {settings.database_url[:50]}...")
     
     try:
         # Configure connection pool with proper limits for production
@@ -34,22 +24,20 @@ async def lifespan(app: FastAPI):
                 'application_name': 'customer_help_center_api'
             }
         )
-        logger.info("Database pool created successfully with 2-5 connections")
+        # Database pool created successfully
         
         # Test the connection
         async with db_pool.acquire() as conn:
             version = await conn.fetchval('SELECT version()')
-            logger.info(f"Connected to database: {version.split(',')[0]}")
+            # Connected to database
     except Exception as e:
-        logger.error(f"Failed to create database pool: {type(e).__name__}: {str(e)}")
+        # Failed to create database pool
         raise
     
     yield
     
     # Shutdown
-    logger.info("Shutting down API server...")
     await db_pool.close()
-    logger.info("Database pool closed")
 
 app = FastAPI(
     title="Customer Help Center API",
@@ -72,7 +60,7 @@ async def health_check():
     return {"ok": True}
 
 # Import and include routers after app creation to avoid circular imports
-from routers import search, articles, feedback, revalidate, rag, ingestion, admin, analytics, ai_render, admin_panel
+from routers import search, articles, feedback, revalidate, rag, ingestion, admin, analytics, ai_render, admin_panel, chat, admin_visa
 
 app.include_router(search.router, prefix=settings.api_prefix)
 app.include_router(articles.router, prefix=settings.api_prefix)
@@ -84,6 +72,8 @@ app.include_router(admin.router, prefix=settings.api_prefix)
 app.include_router(analytics.router, prefix=settings.api_prefix)
 app.include_router(ai_render.router, prefix=settings.api_prefix)
 app.include_router(admin_panel.router, prefix=settings.api_prefix)
+app.include_router(chat.router, prefix=settings.api_prefix)
+app.include_router(admin_visa.router, prefix=settings.api_prefix)
 
 # Make db_pool accessible
 app.state.db_pool = lambda: db_pool

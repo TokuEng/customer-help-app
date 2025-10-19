@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  LayoutDashboard, RefreshCw, BarChart3, FileText, 
-  Settings, Users, Database, ChevronRight, Home
+  LayoutDashboard, RefreshCw, BarChart3, 
+  Users, ChevronRight, Home
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,24 +25,9 @@ const sidebarItems = [
     icon: BarChart3,
   },
   {
-    title: 'Articles',
-    href: '/admin/articles',
-    icon: FileText,
-  },
-  {
     title: 'Work Submissions',
     href: '/admin/work-submissions',
     icon: Users,
-  },
-  {
-    title: 'Database',
-    href: '/admin/database',
-    icon: Database,
-  },
-  {
-    title: 'Settings',
-    href: '/admin/settings',
-    icon: Settings,
   },
 ];
 
