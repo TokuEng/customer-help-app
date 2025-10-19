@@ -52,7 +52,7 @@ export default function ChatWidget() {
     
     try {
       // Get backend URL from environment
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
       
       // Native fetch to FastAPI with streaming
       const response = await fetch(`${backendUrl}/chat/stream`, {
