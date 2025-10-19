@@ -19,39 +19,38 @@ export function Header() {
           </Link>
 
           {/* Navigation */}
-          <nav className="flex items-center space-x-1 sm:space-x-3 lg:space-x-6">
+          <nav className="flex items-center space-x-0.5 sm:space-x-2 md:space-x-3 lg:space-x-6">
             <Link
               href="/"
-              className="text-sm sm:text-base lg:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-2 sm:px-3 py-2"
+              className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-1.5 sm:px-2 md:px-3 py-2"
             >
-              <span className="hidden sm:inline">Home</span>
-              <span className="sm:hidden">Home</span>
+              Home
             </Link>
             <Link
               href="/search"
-              className="text-sm sm:text-base lg:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-2 sm:px-3 py-2"
+              className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-1.5 sm:px-2 md:px-3 py-2"
             >
               Search
             </Link>
             <Link
               href="/calendar"
-              className="hidden sm:inline-flex text-sm sm:text-base lg:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-2 sm:px-3 py-2"
+              className="hidden md:inline-flex text-xs sm:text-sm md:text-base lg:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-1.5 sm:px-2 md:px-3 py-2"
             >
               Calendar
             </Link>
             <Link
               href="/calculators/employer-cost"
-              className="text-sm sm:text-base lg:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-2 sm:px-3 py-2"
+              className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-1.5 sm:px-2 md:px-3 py-2"
             >
               <span className="hidden sm:inline">Cost Calculator</span>
-              <span className="sm:hidden">Cost Calc</span>
+              <span className="sm:hidden">Cost</span>
             </Link>
             <Link
               href="/calculators/prorated"
-              className="text-sm sm:text-base lg:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-2 sm:px-3 py-2"
+              className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-gray-700 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md px-1.5 sm:px-2 md:px-3 py-2"
             >
-              <span className="hidden sm:inline">Prorated Calculator</span>
-              <span className="sm:hidden">Prorated</span>
+              <span className="hidden sm:inline">Prorated</span>
+              <span className="sm:hidden">Pro</span>
             </Link>
           </nav>
         </div>

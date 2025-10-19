@@ -34,22 +34,22 @@ export default function Hero() {
         </div>
 
         {/* Top tasks */}
-        <div className="mx-auto mt-8 grid max-w-5xl grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 lg:grid-cols-6 px-4 sm:px-0">
+        <div className="mx-auto mt-8 grid max-w-5xl grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 lg:grid-cols-6 px-2 sm:px-4 md:px-0">
           {topTasks.map((task) => {
             const Icon = task.icon;
             return (
               <Link 
                 key={task.label} 
                 href={task.href} 
-                className="group rounded-lg sm:rounded-xl border bg-white px-2 sm:px-3 py-2 hover:shadow transition-all hover:-translate-y-0.5"
+                className="group rounded-lg sm:rounded-xl border bg-white px-2 sm:px-3 py-2.5 sm:py-2 hover:shadow transition-all hover:-translate-y-0.5"
               >
-                <div className="flex items-center gap-2">
-                  <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gray-50 group-hover:bg-[#1c46ce]/10 flex items-center justify-center transition-colors">
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 group-hover:text-[#1c46ce]" />
+                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-2">
+                  <div className="flex-shrink-0 w-9 h-9 sm:w-9 sm:h-9 rounded-lg bg-gray-50 group-hover:bg-[#1c46ce]/10 flex items-center justify-center transition-colors">
+                    <Icon className="w-5 h-5 sm:w-5 sm:h-5 text-gray-600 group-hover:text-[#1c46ce]" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium group-hover:text-[#1c46ce] truncate">{task.label}</div>
-                    <div className="text-xs text-gray-500 hidden sm:block">Quick link</div>
+                  <div className="min-w-0 text-center sm:text-left">
+                    <div className="text-xs sm:text-sm font-medium group-hover:text-[#1c46ce] truncate">{task.label}</div>
+                    <div className="text-xs text-gray-500 hidden lg:block">Quick link</div>
                   </div>
                 </div>
               </Link>
