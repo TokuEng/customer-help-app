@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  RefreshCw, Play, Pause, AlertCircle, CheckCircle, 
-  Clock, FileText, Database, Search, HelpCircle, Plane, 
-  Plus, Trash2, Upload, FileText as FileIcon
+  RefreshCw, Play, CheckCircle, 
+  FileText, Database, Search, HelpCircle, Plane, 
+  Plus, Trash2, Upload
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
@@ -82,6 +82,7 @@ export default function IngestionManagement() {
   useEffect(() => {
     fetchArticles();
     fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collectionType]);
 
   const fetchArticles = async () => {
@@ -240,7 +241,7 @@ export default function IngestionManagement() {
       
       if (response.ok) {
         setUploadProgress('Content uploaded! Generating embeddings...');
-        const data = await response.json();
+        await response.json();
         
         setUploadProgress('Indexing complete! You can now test in the chatbot.');
         const displayTitle = inputType === 'file' && selectedFile && !manualTitle 

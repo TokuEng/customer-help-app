@@ -49,10 +49,10 @@ export default function VisaIngestionPage() {
       // Reset form
       setFormData({ title: '', content: '', country_code: '', visa_type: '', category: '' });
       
-    } catch (error: any) {
+    } catch (error) {
       setStatus({ 
         type: 'error', 
-        message: `❌ Error: ${error.message}`
+        message: `❌ Error: ${error instanceof Error ? error.message : String(error)}`
       });
     }
   };
@@ -95,10 +95,10 @@ export default function VisaIngestionPage() {
       setFile(null);
       setFormData({ title: '', content: '', country_code: '', visa_type: '', category: '' });
       
-    } catch (error: any) {
+    } catch (error) {
       setStatus({ 
         type: 'error', 
-        message: `❌ Error: ${error.message}`
+        message: `❌ Error: ${error instanceof Error ? error.message : String(error)}`
       });
     }
   };
