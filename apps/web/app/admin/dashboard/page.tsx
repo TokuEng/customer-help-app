@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { 
   Activity, Database, Search, RefreshCw, CheckCircle, AlertCircle, 
-  XCircle, Clock, FileText, Server, Cloud,
-  Settings, ArrowRight, BarChart3, Zap
+  XCircle, Clock, Server, Cloud, Users,
+  ArrowRight, BarChart3, Zap
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -119,7 +119,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Link href="/admin/ingestion">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
               <CardHeader className="pb-3">
@@ -150,31 +150,16 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link href="/admin/articles">
+          <Link href="/admin/work-submissions">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center">
-                  <FileText className="mr-2 h-5 w-5 text-primary" />
-                  Articles
+                  <Users className="mr-2 h-5 w-5 text-primary" />
+                  Work Submissions
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-600">Browse all content</p>
-                <ArrowRight className="h-4 w-4 mt-2 text-primary" />
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/settings">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center">
-                  <Settings className="mr-2 h-5 w-5 text-primary" />
-                  Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600">System configuration</p>
+                <p className="text-sm text-gray-600">Manage user requests</p>
                 <ArrowRight className="h-4 w-4 mt-2 text-primary" />
               </CardContent>
             </Card>

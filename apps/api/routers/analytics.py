@@ -81,7 +81,7 @@ async def track_chat(request: Request, data: ChatTrackRequest):
             
             await conn.execute(
                 """
-                INSERT INTO chat_logs (
+                INSERT INTO chat_interactions (
                     session_id, user_message, assistant_response, 
                     contexts_used, response_time_ms, created_at
                 )

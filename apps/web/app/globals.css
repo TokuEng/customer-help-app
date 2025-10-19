@@ -236,4 +236,31 @@
   .animate-fadeIn {
     animation: fadeIn 0.2s ease-out;
   }
+  
+  /* Chat widget markdown styling */
+  .markdown-content p {
+    @apply mb-2 last:mb-0 leading-relaxed;
+  }
+  
+  .markdown-content ul,
+  .markdown-content ol {
+    @apply my-2;
+  }
+  
+  .markdown-content li {
+    @apply mb-1;
+  }
+  
+  .markdown-content strong {
+    @apply font-semibold;
+  }
+  
+  .markdown-content h3 {
+    @apply text-sm font-semibold mt-2 mb-1;
+  }
+  
+  /* Fix spacing between markdown elements */
+  .markdown-content > *:not(:last-child) {
+    @apply mb-2;
+  }
 }

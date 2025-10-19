@@ -6,6 +6,9 @@ import asyncpg
 import json
 import uuid
 from core.settings import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -501,3 +504,312 @@ async def get_analytics_trends(
             ]
         
         return trends_data
+
+# Ingestion Management Endpoints
+@router.get("/admin/ingestion/articles")
+async def get_general_articles(
+    request: Request,
+    authorization: str = Header(..., description="Bearer token"),
+    limit: int = Query(100, ge=1, le=500)
+):
+    """Get indexed articles from general help center collection"""
+    token = authorization.replace("Bearer ", "")
+    if token != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    try:
+        db_pool = request.app.state.db_pool()
+        async with db_pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT 
+                    a.id::text as id,
+                    a.title,
+                    a.slug,
+                    COUNT(c.article_id) as chunks_count,
+                    a.updated_at,
+                    a.updated_at as created_at
+                FROM articles a
+                LEFT JOIN chunks c ON a.id = c.article_id
+                GROUP BY a.id, a.title, a.slug, a.updated_at
+                ORDER BY a.updated_at DESC
+                LIMIT $1
+            """, limit)
+            
+            return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"Error fetching general articles: {e}")
+        # Return empty array instead of failing
+        return []
+
+@router.get("/admin/ingestion/stats")
+async def get_general_stats(
+    request: Request,
+    authorization: str = Header(..., description="Bearer token")
+):
+    """Get statistics for general help center collection"""
+    token = authorization.replace("Bearer ", "")
+    if token != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    db_pool = request.app.state.db_pool()
+    async with db_pool.acquire() as conn:
+        stats = await conn.fetchrow("""
+            SELECT 
+                COUNT(DISTINCT a.id) as total_articles,
+                COUNT(c.article_id) as total_chunks,
+                MAX(a.updated_at) as last_updated
+            FROM articles a
+            LEFT JOIN chunks c ON a.id = c.article_id
+        """)
+        
+        # Get category distribution
+        categories = await conn.fetch("""
+            SELECT 
+                COALESCE(category, 'Uncategorized') as category,
+                COUNT(*) as count
+            FROM articles
+            GROUP BY category
+            ORDER BY count DESC
+        """)
+        
+        return {
+            "total_articles": stats['total_articles'],
+            "total_chunks": stats['total_chunks'],
+            "last_updated": stats['last_updated'].isoformat() if stats['last_updated'] else None,
+            "categories": {row['category']: row['count'] for row in categories}
+        }
+
+@router.delete("/admin/ingestion/articles/{article_id}")
+async def delete_general_article(
+    article_id: str,
+    request: Request,
+    authorization: str = Header(..., description="Bearer token")
+):
+    """Delete a general help center article"""
+    token = authorization.replace("Bearer ", "")
+    if token != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    db_pool = request.app.state.db_pool()
+    async with db_pool.acquire() as conn:
+        # Delete chunks first (due to foreign key)
+        await conn.execute("DELETE FROM chunks WHERE article_id = $1", uuid.UUID(article_id))
+        # Delete article
+        await conn.execute("DELETE FROM articles WHERE id = $1", uuid.UUID(article_id))
+        
+        return {"success": True, "message": "Article deleted"}
+
+@router.get("/admin/visa/stats")
+async def get_visa_stats(
+    request: Request,
+    authorization: str = Header(..., description="Bearer token")
+):
+    """Get statistics for visa collection"""
+    token = authorization.replace("Bearer ", "")
+    if token != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    db_pool = request.app.state.db_pool()
+    async with db_pool.acquire() as conn:
+        stats = await conn.fetchrow("""
+            SELECT 
+                COUNT(DISTINCT a.id) as total_articles,
+                COUNT(c.article_id) as total_chunks,
+                MAX(a.updated_at) as last_updated
+            FROM visa_articles a
+            LEFT JOIN visa_chunks c ON a.id = c.article_id
+        """)
+        
+        # Get category distribution
+        categories = await conn.fetch("""
+            SELECT 
+                COALESCE(category, 'Uncategorized') as category,
+                COUNT(*) as count
+            FROM visa_articles
+            GROUP BY category
+            ORDER BY count DESC
+        """)
+        
+        return {
+            "total_articles": stats['total_articles'],
+            "total_chunks": stats['total_chunks'],
+            "last_updated": stats['last_updated'].isoformat() if stats['last_updated'] else None,
+            "categories": {row['category']: row['count'] for row in categories}
+        }
+
+@router.delete("/admin/visa/articles/{article_id}")
+async def delete_visa_article(
+    article_id: str,
+    request: Request,
+    authorization: str = Header(..., description="Bearer token")
+):
+    """Delete a visa article"""
+    token = authorization.replace("Bearer ", "")
+    if token != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    db_pool = request.app.state.db_pool()
+    async with db_pool.acquire() as conn:
+        # Delete chunks first (due to foreign key)
+        await conn.execute("DELETE FROM visa_chunks WHERE article_id = $1", uuid.UUID(article_id))
+        # Delete article
+        await conn.execute("DELETE FROM visa_articles WHERE id = $1", uuid.UUID(article_id))
+        
+        return {"success": True, "message": "Visa article deleted"}
+
+@router.get("/admin/analytics")
+async def get_analytics(
+    request: Request,
+    authorization: str = Header(..., description="Bearer token"),
+    range: str = Query("30d", description="Time range: 7d, 30d, 90d")
+):
+    """Get analytics data for the dashboard"""
+    token = authorization.replace("Bearer ", "")
+    if token != settings.admin_key:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    # Calculate date range
+    days = {"7d": 7, "30d": 30, "90d": 90}.get(range, 30)
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
+    
+    try:
+        db_pool = request.app.state.db_pool()
+        async with db_pool.acquire() as conn:
+            # Get total counts
+            search_count = await conn.fetchval("""
+                SELECT COUNT(*) FROM search_queries 
+                WHERE searched_at >= $1
+            """, start_date)
+            
+            article_views_count = await conn.fetchval("""
+                SELECT COUNT(*) FROM article_views 
+                WHERE viewed_at >= $1
+            """, start_date)
+            
+            chat_count = await conn.fetchval("""
+                SELECT COUNT(*) FROM chat_interactions 
+                WHERE created_at >= $1
+            """, start_date)
+            
+            page_visits_count = await conn.fetchval("""
+                SELECT COUNT(*) FROM page_visits 
+                WHERE visited_at >= $1
+            """, start_date)
+            
+            # Get top searches
+            top_searches = await conn.fetch("""
+                SELECT query, COUNT(*) as count
+                FROM search_queries
+                WHERE searched_at >= $1
+                GROUP BY query
+                ORDER BY count DESC
+                LIMIT 5
+            """, start_date)
+            
+            # Get top articles by views
+            top_articles = await conn.fetch("""
+                SELECT 
+                    a.title,
+                    COUNT(av.id) as views,
+                    'general' as category
+                FROM article_views av
+                JOIN articles a ON av.article_id = a.id
+                WHERE av.viewed_at >= $1
+                GROUP BY a.id, a.title
+                ORDER BY views DESC
+                LIMIT 5
+            """, start_date)
+            
+            # Get daily stats for the last 7 days
+            daily_stats = await conn.fetch("""
+                WITH date_series AS (
+                    SELECT generate_series(
+                        CURRENT_DATE - INTERVAL '6 days',
+                        CURRENT_DATE,
+                        INTERVAL '1 day'
+                    )::date AS date
+                ),
+                daily_searches AS (
+                    SELECT 
+                        DATE(searched_at) as date,
+                        COUNT(*) as searches
+                    FROM search_queries
+                    WHERE searched_at >= CURRENT_DATE - INTERVAL '7 days'
+                    GROUP BY DATE(searched_at)
+                ),
+                daily_views AS (
+                    SELECT 
+                        DATE(viewed_at) as date,
+                        COUNT(*) as views
+                    FROM article_views
+                    WHERE viewed_at >= CURRENT_DATE - INTERVAL '7 days'
+                    GROUP BY DATE(viewed_at)
+                )
+                SELECT 
+                    ds.date::text,
+                    COALESCE(s.searches, 0) as searches,
+                    COALESCE(v.views, 0) as views
+                FROM date_series ds
+                LEFT JOIN daily_searches s ON ds.date = s.date
+                LEFT JOIN daily_views v ON ds.date = v.date
+                ORDER BY ds.date DESC
+                LIMIT 5
+            """)
+            
+            # Get category engagement (based on article views)
+            category_engagement = await conn.fetch("""
+                SELECT 
+                    CASE 
+                        WHEN a.title ILIKE '%visa%' OR a.title ILIKE '%immigration%' THEN 'visa'
+                        WHEN a.title ILIKE '%benefit%' THEN 'benefits'
+                        WHEN a.title ILIKE '%payroll%' OR a.title ILIKE '%payment%' THEN 'payroll'
+                        ELSE 'general'
+                    END as category,
+                    COUNT(*) as count
+                FROM article_views av
+                JOIN articles a ON av.article_id = a.id
+                WHERE av.viewed_at >= $1
+                GROUP BY CASE 
+                        WHEN a.title ILIKE '%visa%' OR a.title ILIKE '%immigration%' THEN 'visa'
+                        WHEN a.title ILIKE '%benefit%' THEN 'benefits'
+                        WHEN a.title ILIKE '%payroll%' OR a.title ILIKE '%payment%' THEN 'payroll'
+                        ELSE 'general'
+                    END
+            """, start_date)
+            
+            # Format response
+            return {
+                "searchQueries": search_count or 0,
+                "articleViews": article_views_count or 0,
+                "chatInteractions": chat_count or 0,
+                "pageVisits": page_visits_count or 0,
+                "topSearches": [
+                    {"query": row["query"], "count": row["count"]} 
+                    for row in top_searches
+                ],
+                "topArticles": [
+                    {"title": row["title"], "views": row["views"], "category": row["category"]} 
+                    for row in top_articles
+                ],
+                "dailyStats": [
+                    {"date": row["date"], "searches": row["searches"], "views": row["views"]}
+                    for row in daily_stats
+                ],
+                "categoryEngagement": {
+                    row["category"]: row["count"] 
+                    for row in category_engagement
+                }
+            }
+    except Exception as e:
+        logger.error(f"Error fetching analytics: {e}")
+        # Return zeros if there's an error
+        return {
+            "searchQueries": 0,
+            "articleViews": 0,
+            "chatInteractions": 0,
+            "pageVisits": 0,
+            "topSearches": [],
+            "topArticles": [],
+            "dailyStats": [],
+            "categoryEngagement": {}
+        }
