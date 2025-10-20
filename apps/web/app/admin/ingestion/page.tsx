@@ -110,7 +110,7 @@ export default function IngestionManagement() {
           setGeneralArticles(data);
         }
       }
-    } catch (error) {
+    } catch {
       // Failed to fetch articles
     }
   };
@@ -139,7 +139,7 @@ export default function IngestionManagement() {
           setGeneralStats(data);
         }
       }
-    } catch (error) {
+    } catch {
       // Failed to fetch stats
     }
   };
@@ -191,8 +191,8 @@ export default function IngestionManagement() {
       } else {
         setLogs(prev => [...prev, '❌ Ingestion failed']);
       }
-    } catch (error) {
-      setLogs(prev => [...prev, `❌ Error: ${error}`]);
+    } catch {
+      setLogs(prev => [...prev, '❌ Error occurred during ingestion']);
       setIsIngesting(false);
     }
   };
@@ -278,8 +278,8 @@ export default function IngestionManagement() {
         setIsSubmitting(false);
         setUploadProgress('');
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    } catch {
+      const errorMessage = 'Unknown error occurred';
       setLogs(prev => [...prev, `❌ Error: ${errorMessage}`]);
       alert(`Error: ${errorMessage}`);
       setIsSubmitting(false);
@@ -308,8 +308,8 @@ export default function IngestionManagement() {
         await fetchArticles();
         await fetchStats();
       }
-    } catch (error) {
-      setLogs(prev => [...prev, `❌ Failed to delete: ${error}`]);
+    } catch {
+      setLogs(prev => [...prev, '❌ Failed to delete article']);
     }
   };
 

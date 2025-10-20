@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     api_prefix: str = "/api"
     cors_origins: list[str] = ["*"]
     
-    # Admin access for analytics dashboard
-    admin_key: str = os.getenv("ADMIN_KEY", "admin_access_token_2024")
+    # Authentication - Now using session-based auth (see services/auth.py)
+    # Old admin_key removed - use /auth/login endpoint instead
     
     # DigitalOcean Spaces (for permanent image storage)
     spaces_key: Optional[str] = None

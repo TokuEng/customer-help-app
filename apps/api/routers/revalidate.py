@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Request, HTTPException, Header
+from typing import Dict, Any
+from services.auth import get_current_user
+from fastapi import APIRouter, Request, HTTPException, Header, Depends
 from pydantic import BaseModel
 import httpx
 from core.settings import settings
@@ -16,13 +18,9 @@ class RevalidateResponse(BaseModel):
 async def revalidate(
     request: Request, 
     body: RevalidateRequest,
-    authorization: str = Header(..., description="Bearer token")
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
-    # Validate token
-    token = authorization.replace("Bearer ", "")
-    if token != settings.revalidate_token:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
+    """Revalidate a specific article page"""
     try:
         # Call Next.js ISR endpoint
         async with httpx.AsyncClient() as client:

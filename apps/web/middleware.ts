@@ -6,16 +6,20 @@ export function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/admin')) {
     // Allow access to login page and auth API
     if (request.nextUrl.pathname === '/admin/login' || 
-        request.nextUrl.pathname.startsWith('/api/admin/auth')) {
+        request.nextUrl.pathname.startsWith('/api/auth')) {
       return NextResponse.next()
     }
     
     // Check for authentication cookie
+    const adminToken = request.cookies.get('admin_token')?.value
     const isAuthenticated = request.cookies.get('admin_authenticated')?.value === 'true'
     
     // If not authenticated, redirect to login
-    if (!isAuthenticated) {
-      return NextResponse.redirect(new URL('/admin/login', request.url))
+    if (!isAuthenticated && !adminToken) {
+      const loginUrl = new URL('/admin/login', request.url)
+      // Preserve the original URL they were trying to access
+      loginUrl.searchParams.set('from', request.nextUrl.pathname)
+      return NextResponse.redirect(loginUrl)
     }
   }
   

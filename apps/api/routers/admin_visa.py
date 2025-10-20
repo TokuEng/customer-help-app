@@ -5,7 +5,8 @@ Supports text input, file upload (PDF, DOCX, MD).
 
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Request, Header
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
+from services.auth import get_current_user
 import io
 import pypdf
 import docx
@@ -25,20 +26,13 @@ class VisaDocumentInput(BaseModel):
 @router.post("/ingest")
 async def ingest_text_document(
     doc: VisaDocumentInput,
-    authorization: str = Header(..., description="Bearer token"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     indexer: VisaIndexerService = Depends(get_visa_indexer)
 ):
     """
-    Ingest visa document from text input.
-    
-    Categories: eligibility, timeline, fees, process, requirements
+    Ingest a visa document from text input.
+    Accessible only to authenticated admin users.
     """
-    
-    # Validate token
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
     try:
         article_id = await indexer.index_document(
             title=doc.title,
@@ -65,19 +59,13 @@ async def ingest_file_document(
     country_code: Optional[str] = Form(None),
     visa_type: Optional[str] = Form(None),
     category: Optional[str] = Form(None),
-    authorization: str = Header(..., description="Bearer token"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     indexer: VisaIndexerService = Depends(get_visa_indexer)
 ):
     """
-    Ingest visa document from file upload.
-    Supports: PDF, DOCX, MD, TXT
+    Ingest a visa document from file upload (PDF, DOCX, MD, TXT).
+    Accessible only to authenticated admin users.
     """
-    
-    # Validate token
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
     if not file.filename:
         raise HTTPException(400, "No filename provided")
     
@@ -122,20 +110,13 @@ async def ingest_file_document(
 @router.get("/articles")
 async def list_visa_articles(
     request: Request,
-    authorization: str = Header(..., description="Bearer token"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     indexer: VisaIndexerService = Depends(get_visa_indexer),
     limit: int = 50,
     offset: int = 0
 ):
-    """List all visa articles"""
-    
-    # Validate token
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
+    """List all visa articles with pagination"""
     try:
-        # Get articles with chunks count
         db_pool = request.app.state.db_pool()
         async with db_pool.acquire() as conn:
             rows = await conn.fetch("""
