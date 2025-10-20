@@ -10,6 +10,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import Link from 'next/link';
 import { ChatTracker } from '@/components/ChatTracker';
+import { getApiBaseUrl } from '@/lib/api';
 
 type CollectionType = 'general' | 'visa';
 
@@ -51,8 +52,8 @@ export default function ChatWidget() {
     await ChatTracker.trackUserMessage(userMessage.content);
     
     try {
-      // Get backend URL from environment
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+      // Get backend URL using the same logic as the API client
+      const backendUrl = getApiBaseUrl();
       
       // Native fetch to FastAPI with streaming
       const response = await fetch(`${backendUrl}/chat/stream`, {

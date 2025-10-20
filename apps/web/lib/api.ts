@@ -1,5 +1,5 @@
 // Get the base URL for API calls
-function getApiBaseUrl() {
+export function getApiBaseUrl() {
   // For server-side rendering, check BACKEND_URL first
   if (typeof window === 'undefined') {
     const backendUrl = process.env.BACKEND_URL;
