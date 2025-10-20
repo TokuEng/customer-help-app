@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Header, Query, Request
+from fastapi import APIRouter, HTTPException, Header, Query, Request, Depends
 from pydantic import BaseModel, EmailStr
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any
+from services.auth import get_current_user
 import asyncpg
 import json
 import uuid
@@ -101,16 +102,11 @@ class SearchAnalytics(BaseModel):
 
 @router.get("/admin/ingestion/logs", response_model=List[IngestionLogResponse])
 async def get_ingestion_logs(
-    authorization: str = Header(..., description="Bearer token"),
     status: Optional[str] = Query(None, description="Filter by status"),
     limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Get ingestion logs with optional filtering"""
-    # Validate token
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
     
     conn = await asyncpg.connect(settings.database_url)
     try:
@@ -141,17 +137,11 @@ async def get_ingestion_logs(
 @router.get("/admin/ingestion/logs/{log_id}/events", response_model=List[IngestionEventResponse])
 async def get_ingestion_events(
     log_id: int,
-    authorization: str = Header(..., description="Bearer token"),
     event_type: Optional[str] = Query(None),
-    limit: int = Query(100, ge=1, le=500)
+    limit: int = Query(100, ge=1, le=500),
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
-    """Get events for a specific ingestion log"""
-    # Validate token
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    conn = await asyncpg.connect(settings.database_url)
+    """Admin endpoint"""
     try:
         query = """
             SELECT id, timestamp, event_type, page_id, page_title, category, message
@@ -178,15 +168,10 @@ async def get_ingestion_events(
 
 @router.get("/admin/ingestion/summary", response_model=List[IngestionSummaryResponse])
 async def get_ingestion_summary(
-    authorization: str = Header(..., description="Bearer token"),
-    days: int = Query(30, ge=1, le=365)
+    days: int = Query(30, ge=1, le=365),
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Get ingestion summary statistics by day"""
-    # Validate token
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
     conn = await asyncpg.connect(settings.database_url)
     try:
         rows = await conn.fetch(
@@ -215,14 +200,9 @@ async def get_ingestion_summary(
 
 @router.get("/admin/dashboard/stats", response_model=DashboardStatsResponse)
 async def get_dashboard_stats(
-    authorization: str = Header(..., description="Bearer token")
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Get dashboard statistics for the admin UI"""
-    # Validate token
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
     conn = await asyncpg.connect(settings.database_url)
     try:
         # Get various stats in parallel using a single query
@@ -280,17 +260,12 @@ async def get_dashboard_stats(
 @router.get("/admin/work-submissions", response_model=List[WorkSubmissionResponse])
 async def get_work_submissions(
     request: Request,
-    authorization: str = Header(..., description="Bearer token"),
     status: Optional[str] = Query(None),
     priority: Optional[str] = Query(None),
-    limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0)
+    limit: int = Query(100, ge=1, le=500),
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Get all work submissions with optional filtering"""
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
     db_pool = request.app.state.db_pool()
     async with db_pool.acquire() as conn:
         query = """
@@ -340,14 +315,10 @@ async def get_work_submissions(
 @router.get("/admin/analytics/overview")
 async def get_analytics_overview(
     request: Request,
-    authorization: str = Header(..., description="Bearer token"),
-    days: int = Query(7, ge=1, le=90)
+    days: int = Query(7, ge=1, le=90),
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Get analytics overview for the admin dashboard"""
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
     db_pool = request.app.state.db_pool()
     async with db_pool.acquire() as conn:
         # Get various analytics
@@ -443,16 +414,12 @@ async def get_analytics_overview(
 @router.get("/admin/analytics/trends")
 async def get_analytics_trends(
     request: Request,
-    authorization: str = Header(..., description="Bearer token"),
     days: int = Query(30, ge=1, le=90),
-    metric: str = Query("all", regex="^(all|views|searches|chats)$")
+    metric: str = Query("all", regex="^(all|views|searches|chats)$"),
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
-    """Get analytics trends over time"""
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    db_pool = request.app.state.db_pool()
+    """Admin endpoint"""
+    conn = await asyncpg.connect(settings.database_url)
     async with db_pool.acquire() as conn:
         trends_data = {}
         
@@ -507,14 +474,10 @@ async def get_analytics_trends(
 @router.get("/admin/ingestion/articles")
 async def get_general_articles(
     request: Request,
-    authorization: str = Header(..., description="Bearer token"),
-    limit: int = Query(100, ge=1, le=500)
+    limit: int = Query(100, ge=1, le=500),
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Get indexed articles from general help center collection"""
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
     try:
         db_pool = request.app.state.db_pool()
         async with db_pool.acquire() as conn:
@@ -541,13 +504,9 @@ async def get_general_articles(
 @router.get("/admin/ingestion/stats")
 async def get_general_stats(
     request: Request,
-    authorization: str = Header(..., description="Bearer token")
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Get statistics for general help center collection"""
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
     db_pool = request.app.state.db_pool()
     async with db_pool.acquire() as conn:
         stats = await conn.fetchrow("""
@@ -580,12 +539,9 @@ async def get_general_stats(
 async def delete_general_article(
     article_id: str,
     request: Request,
-    authorization: str = Header(..., description="Bearer token")
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Delete a general help center article"""
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
     
     db_pool = request.app.state.db_pool()
     async with db_pool.acquire() as conn:
@@ -599,13 +555,9 @@ async def delete_general_article(
 @router.get("/admin/visa/stats")
 async def get_visa_stats(
     request: Request,
-    authorization: str = Header(..., description="Bearer token")
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Get statistics for visa collection"""
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
     db_pool = request.app.state.db_pool()
     async with db_pool.acquire() as conn:
         stats = await conn.fetchrow("""
@@ -638,12 +590,9 @@ async def get_visa_stats(
 async def delete_visa_article(
     article_id: str,
     request: Request,
-    authorization: str = Header(..., description="Bearer token")
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Delete a visa article"""
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
     
     db_pool = request.app.state.db_pool()
     async with db_pool.acquire() as conn:
@@ -657,14 +606,10 @@ async def delete_visa_article(
 @router.get("/admin/analytics")
 async def get_analytics(
     request: Request,
-    authorization: str = Header(..., description="Bearer token"),
-    range: str = Query("30d", description="Time range: 7d, 30d, 90d")
+    range: str = Query("30d", description="Time range: 7d, 30d, 90d"),
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Get analytics data for the dashboard"""
-    token = authorization.replace("Bearer ", "")
-    if token != settings.admin_key:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
     # Calculate date range
     days = {"7d": 7, "30d": 30, "90d": 90}.get(range, 30)
     start_date = datetime.now(timezone.utc) - timedelta(days=days)

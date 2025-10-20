@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Header, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Header, BackgroundTasks, Depends
 from pydantic import BaseModel
 from datetime import datetime, timezone
 import asyncio
 import asyncpg
 from typing import Optional, Dict, Any
+from services.auth import get_current_user
 import os
 import sys
 
@@ -222,13 +223,9 @@ async def run_ingestion_task(force_full_sync: bool = False, specific_page_ids: O
 async def trigger_ingestion(
     request: IngestionTriggerRequest,
     background_tasks: BackgroundTasks,
-    authorization: str = Header(..., description="Bearer token")
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Manually trigger the ingestion process"""
-    # Validate token
-    token = authorization.replace("Bearer ", "")
-    if token != settings.revalidate_token:
-        raise HTTPException(status_code=401, detail="Invalid token")
     
     if _ingestion_running:
         return {
@@ -253,13 +250,9 @@ async def trigger_ingestion(
 
 @router.get("/ingestion/status", response_model=IngestionStatusResponse)
 async def get_ingestion_status(
-    authorization: str = Header(..., description="Bearer token")
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Get the current status of the ingestion process"""
-    # Validate token
-    token = authorization.replace("Bearer ", "")
-    if token != settings.revalidate_token:
-        raise HTTPException(status_code=401, detail="Invalid token")
     
     # Get last sync time from database
     try:
@@ -291,7 +284,7 @@ async def get_ingestion_status(
 async def ingestion_webhook(
     request: IngestionWebhookRequest,
     background_tasks: BackgroundTasks,
-    authorization: str = Header(None)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Webhook endpoint for external services to trigger ingestion"""
     # For webhook, we might use a different auth mechanism or validate the source

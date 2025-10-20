@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, RefreshCw, BarChart3, 
-  Users, ChevronRight, Home
+  Users, ChevronRight, Home, LogOut, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getCurrentUser, clearAuth } from '@/lib/auth-token';
 
 const sidebarItems = [
   {
@@ -37,6 +39,26 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+  }, []);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      clearAuth();
+      router.push('/admin/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -91,7 +113,34 @@ export default function AdminLayout({
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t space-y-3">
+            {user && (
+              <div className="flex items-center space-x-3 px-2 py-1">
+                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-gray-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user.full_name || user.username}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full flex items-center space-x-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
+              </span>
+            </button>
+            
             <Link href="/" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
               <Home className="h-4 w-4" />
               <span className="text-sm">Back to Help Center</span>

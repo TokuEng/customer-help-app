@@ -37,6 +37,7 @@ langchain-community==0.3.14
 
 # Search dependencies
 rank_bm25==0.2.2
+bcrypt==5.0.0
 
 # File processing for ingestion
 pypdf==5.1.0
