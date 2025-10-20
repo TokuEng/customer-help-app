@@ -1,3 +1,11 @@
+interface AdminUser {
+  id: string;
+  email: string;
+  username: string;
+  full_name?: string;
+  role: string;
+}
+
 // Helper to get the correct auth token based on environment
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') {
@@ -21,7 +29,7 @@ export function getAuthToken(): string | null {
 }
 
 // Get current user from localStorage
-export function getCurrentUser(): any | null {
+export function getCurrentUser(): AdminUser | null {
   if (typeof window === 'undefined') return null;
   
   const userStr = localStorage.getItem('admin_user');

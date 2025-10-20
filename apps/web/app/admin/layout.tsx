@@ -10,6 +10,14 @@ import {
 import { cn } from '@/lib/utils';
 import { getCurrentUser, clearAuth } from '@/lib/auth-token';
 
+interface AdminUser {
+  id: string;
+  email: string;
+  username: string;
+  full_name?: string;
+  role: string;
+}
+
 const sidebarItems = [
   {
     title: 'Dashboard',
@@ -40,7 +48,7 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AdminUser | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
