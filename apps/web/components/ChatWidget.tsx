@@ -182,9 +182,9 @@ export default function ChatWidget() {
   };
   
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)]">
       {isOpen && (
-        <div className="bg-white rounded-2xl shadow-2xl w-[400px] h-[600px] flex flex-col mb-4 border border-gray-200">
+        <div className="bg-white rounded-2xl shadow-2xl w-full sm:w-[400px] h-[600px] max-h-[calc(100vh-6rem)] flex flex-col mb-4 border border-gray-200">
           {/* Header with mode selector */}
           <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
             <div className="flex items-center justify-between mb-3">
@@ -433,9 +433,9 @@ export default function ChatWidget() {
               ChatTracker.trackChatStart();
             }
           }}
-          className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110"
+          className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-3 sm:p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110"
         >
-          <MessageCircle className="w-6 h-6" />
+          <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
       )}
     </div>
