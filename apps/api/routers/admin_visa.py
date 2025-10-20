@@ -36,7 +36,7 @@ async def ingest_text_document(
     try:
         article_id = await indexer.index_document(
             title=doc.title,
-            content=doc.content,
+            content_md=doc.content,
             country_code=doc.country_code,
             visa_type=doc.visa_type,
             category=doc.category
