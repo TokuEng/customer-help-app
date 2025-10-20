@@ -140,7 +140,7 @@ export default function ProratedCalculatorPage() {
             <div className="space-y-2">
               <label htmlFor="compensation" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-gray-500" />
-                Monthly Compensation (USD)
+                Monthly Compensation
               </label>
               <Input
                 id="compensation"
