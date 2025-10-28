@@ -85,11 +85,11 @@ export default function ChatWidget() {
       const assistantMessageId = Date.now().toString();
       const startTime = Date.now();
       
-      // Add initial empty message
+      // Add initial message with thinking indicator
       setMessages(prev => [...prev, {
         id: assistantMessageId,
         role: 'assistant',
-        content: ''
+        content: 'Toku AI assistant is thinking...'
       }]);
       
       const processStream = async () => {
@@ -383,18 +383,6 @@ export default function ChatWidget() {
                 ))}
                 <div ref={messagesEndRef} />
               </>
-            )}
-            
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 px-4 py-2 rounded-2xl">
-                  <div className="flex gap-1">
-                    <span className="animate-bounce">●</span>
-                    <span className="animate-bounce" style={{ animationDelay: '0.1s' }}>●</span>
-                    <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>●</span>
-                  </div>
-                </div>
-              </div>
             )}
           </div>
           
